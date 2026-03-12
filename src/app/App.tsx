@@ -3,7 +3,6 @@ import { HelmetProvider } from "react-helmet-async";
 import { router } from "./routes";
 import { CartProvider } from "./components/CartContext";
 import { CookieBanner } from "./components/CookieBanner";
-import { BackendStatusBadge } from "./components/BackendStatusBadge";
 
 export default function App() {
   return (
@@ -11,7 +10,6 @@ export default function App() {
       <CartProvider>
         <RouterProvider router={router} />
         <CookieBanner />
-        <BackendStatusBadge />
       </CartProvider>
     </HelmetProvider>
   );

@@ -55,11 +55,7 @@ export function ShopPage() {
               aus Griechenland. Qualit&auml;t von der Ernte bis zur Abf&uuml;llung &ndash;
               daf&uuml;r stehen wir mit unserem Namen.
             </p>
-            {isFromBackend && (
-              <p className="text-emerald-300 text-xs mt-2">
-                ✓ {products.length} Produkte live vom Backend
-              </p>
-            )}
+            {/* debug badge removed */}
           </motion.div>
         </div>
       </div>
