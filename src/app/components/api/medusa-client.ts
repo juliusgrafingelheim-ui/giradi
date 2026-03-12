@@ -163,7 +163,7 @@ export async function checkBackendHealth(): Promise<{
 
 export async function fetchProducts(): Promise<MedusaProduct[] | null> {
   const data = await medusaFetch<{ products: MedusaProduct[] }>(
-    "/products?limit=100&fields=+thumbnail,+metadata,*images,*variants,*variants.prices,*variants.calculated_price"
+    "/products?limit=100&fields=+thumbnail,+metadata,*images,*variants,*variants.prices"
   );
 
   // Debug: log first product's image data to verify thumbnail/images are coming through
@@ -183,7 +183,7 @@ export async function fetchProduct(
   handle: string
 ): Promise<MedusaProduct | null> {
   const data = await medusaFetch<{ products: MedusaProduct[] }>(
-    `/products?handle=${handle}&fields=+thumbnail,+metadata,*images,*variants,*variants.prices,*variants.calculated_price`
+    `/products?handle=${handle}&fields=+thumbnail,+metadata,*images,*variants,*variants.prices`
   );
   return data?.products?.[0] || null;
 }
