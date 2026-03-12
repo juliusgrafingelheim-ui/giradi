@@ -18,8 +18,14 @@ export const MEDUSA_PUBLISHABLE_KEY =
 /** True when backend URL is configured */
 export const IS_BACKEND_ENABLED = !!MEDUSA_BACKEND_URL;
 
+/** Store API base */
+export const STORE_API = `${MEDUSA_BACKEND_URL}/store`;
+
 /** Render free tier sleeps after 15min – cron-job.org pings this */
 export const HEALTH_ENDPOINT = `${MEDUSA_BACKEND_URL}/health`;
 
-/** Store API base */
-export const STORE_API = `${MEDUSA_BACKEND_URL}/store`;
+/**
+ * Store API health check – uses /store/products?limit=1 instead of /health
+ * because /health is not covered by Medusa's STORE_CORS configuration.
+ */
+export const STORE_HEALTH_ENDPOINT = `${STORE_API}/products?limit=1`;

@@ -9,7 +9,7 @@ import {
   STORE_API,
   MEDUSA_PUBLISHABLE_KEY,
   IS_BACKEND_ENABLED,
-  HEALTH_ENDPOINT,
+  STORE_HEALTH_ENDPOINT,
 } from "./config";
 
 // ---------------------------------------------------------------------------
@@ -137,19 +137,22 @@ export async function checkBackendHealth(): Promise<{
   if (!IS_BACKEND_ENABLED) return { online: false, latency: 0 };
 
   const start = Date.now();
-  // Render free tier cold starts can take 30s+, retry up to 2 times
-  for (let attempt = 0; attempt < 3; attempt++) {
+  // Use /store/products?limit=1 instead of /health to avoid CORS issues.
+  // /health is not covered by Medusa's STORE_CORS, but /store/* routes are.
+  for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const res = await fetch(HEALTH_ENDPOINT, {
+      const res = await fetch(STORE_HEALTH_ENDPOINT, {
         method: "GET",
+        headers: {
+          "x-publishable-api-key": MEDUSA_PUBLISHABLE_KEY,
+        },
         signal: AbortSignal.timeout(15000),
       });
       if (res.ok) return { online: true, latency: Date.now() - start };
     } catch {
       // retry
     }
-    // Wait 2s before retry (except last attempt)
-    if (attempt < 2) await new Promise((r) => setTimeout(r, 2000));
+    if (attempt < 1) await new Promise((r) => setTimeout(r, 2000));
   }
   return { online: false, latency: Date.now() - start };
 }
