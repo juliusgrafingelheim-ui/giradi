@@ -440,6 +440,34 @@ export const products: Product[] = [
     inStock: true,
     details: balsamDetails,
   },
+  {
+    id: "balsam-weiss",
+    name: "Balsamessig Weiss",
+    subtitle: "Mild & Elegant · 250 ml",
+    description:
+      "Weißer Balsamessig aus Griechenland – mild, fruchtig und vielseitig einsetzbar. Perfekt für helle Saucen, Fischgerichte und Salate.",
+    price: 8.4,
+    size: "250 ml",
+    category: "balsamessig",
+    categoryLabel: "Balsamessig",
+    image: IK.hero3,
+    inStock: true,
+    details: balsamDetails,
+  },
+  {
+    id: "balsam-trueffel",
+    name: "Balsamessig Trueffel",
+    subtitle: "Edel & Aromatisch · 250 ml",
+    description:
+      "Exquisiter Balsamessig verfeinert mit dem unverwechselbaren Aroma schwarzer Trüffel. Ein Hauch von Luxus für Risotto, Pasta und feine Vorspeisen.",
+    price: 9.5,
+    size: "250 ml",
+    category: "balsamessig",
+    categoryLabel: "Balsamessig",
+    image: IK.hero3,
+    inStock: true,
+    details: balsamDetails,
+  },
 ];
 
 export const categories = [
