@@ -230,6 +230,15 @@ function medusaToProduct(medusa: MedusaProduct): Product {
   // Description: prefer Medusa, then local
   const description = medusa.description || localMatch?.description || "";
 
+  // Image: prefer thumbnail, then first image from images array, then local fallback
+  let image: string = localMatch?.image || IK.girardiOil;
+  if (isUsableThumbnail(medusa.thumbnail)) {
+    image = medusa.thumbnail;
+  } else if (medusa.images?.length) {
+    const firstUsable = medusa.images.find((img) => isUsableThumbnail(img.url));
+    if (firstUsable) image = firstUsable.url;
+  }
+
   return {
     id: medusa.handle || medusa.id,
     name: medusa.title,
@@ -239,9 +248,7 @@ function medusaToProduct(medusa: MedusaProduct): Product {
     size,
     category,
     categoryLabel,
-    image: isUsableThumbnail(medusa.thumbnail)
-      ? medusa.thumbnail
-      : localMatch?.image || IK.girardiOil,
+    image,
     badge,
     inStock:
       variant?.inventory_quantity !== undefined
@@ -266,13 +273,14 @@ interface UseMedusaProductsResult {
 }
 
 export function useMedusaProducts(): UseMedusaProductsResult {
-  const [products, setProducts] = useState<Product[]>(localProducts);
-  const [loading, setLoading] = useState(IS_BACKEND_ENABLED);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFromBackend, setIsFromBackend] = useState(false);
 
   useEffect(() => {
     if (!IS_BACKEND_ENABLED) {
+      setProducts(localProducts);
       setLoading(false);
       return;
     }
@@ -287,13 +295,28 @@ export function useMedusaProducts(): UseMedusaProductsResult {
         if (cancelled) return;
 
         if (medusaProducts && medusaProducts.length > 0) {
+          console.log(`[useMedusaProducts] Backend returned ${medusaProducts.length} products`);
+
           const mapped = medusaProducts.map(medusaToProduct);
-          setProducts(mapped);
+
+          // Deduplicate by id (handle) – keep only the first occurrence
+          const seen = new Set<string>();
+          const deduped = mapped.filter((p) => {
+            if (seen.has(p.id)) {
+              console.warn(`[useMedusaProducts] Duplicate skipped: ${p.id} – "${p.name}"`);
+              return false;
+            }
+            seen.add(p.id);
+            return true;
+          });
+
+          console.log(`[useMedusaProducts] After dedup: ${deduped.length} products (${mapped.length - deduped.length} duplicates removed)`);
+
+          setProducts(deduped);
           setIsFromBackend(true);
           setError(null);
-          confirmBackendOnline(); // Signal to status badge
+          confirmBackendOnline();
         } else {
-          // Backend returned empty or null – use local fallback
           setProducts(localProducts);
           setIsFromBackend(false);
           setError("Backend erreichbar, aber keine Produkte gefunden.");
