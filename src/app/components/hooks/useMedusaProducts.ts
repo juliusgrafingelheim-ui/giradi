@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { fetchProducts, type MedusaProduct } from "../api/medusa-client";
 import { IS_BACKEND_ENABLED } from "../api/config";
+import { confirmBackendOnline } from "../api/use-backend-status";
 import { products as localProducts, type Product, IK } from "../productData";
 
 // ---------------------------------------------------------------------------
@@ -160,6 +161,7 @@ export function useMedusaProducts(): UseMedusaProductsResult {
           setProducts(mapped);
           setIsFromBackend(true);
           setError(null);
+          confirmBackendOnline(); // Signal to status badge
         } else {
           // Backend returned empty or null – use local fallback
           setProducts(localProducts);

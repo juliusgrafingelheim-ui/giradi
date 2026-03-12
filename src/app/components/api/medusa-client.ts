@@ -137,15 +137,21 @@ export async function checkBackendHealth(): Promise<{
   if (!IS_BACKEND_ENABLED) return { online: false, latency: 0 };
 
   const start = Date.now();
-  try {
-    const res = await fetch(HEALTH_ENDPOINT, {
-      method: "GET",
-      signal: AbortSignal.timeout(8000), // Render cold start can take a few sec
-    });
-    return { online: res.ok, latency: Date.now() - start };
-  } catch {
-    return { online: false, latency: Date.now() - start };
+  // Render free tier cold starts can take 30s+, retry up to 2 times
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await fetch(HEALTH_ENDPOINT, {
+        method: "GET",
+        signal: AbortSignal.timeout(15000),
+      });
+      if (res.ok) return { online: true, latency: Date.now() - start };
+    } catch {
+      // retry
+    }
+    // Wait 2s before retry (except last attempt)
+    if (attempt < 2) await new Promise((r) => setTimeout(r, 2000));
   }
+  return { online: false, latency: Date.now() - start };
 }
 
 // ---------------------------------------------------------------------------

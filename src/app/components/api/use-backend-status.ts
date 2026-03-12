@@ -4,6 +4,12 @@ import { IS_BACKEND_ENABLED } from "./config";
 
 export type BackendStatus = "unconfigured" | "checking" | "online" | "offline";
 
+// Global flag: set to true when any successful Store API call completes
+let _backendConfirmedOnline = false;
+export function confirmBackendOnline() {
+  _backendConfirmedOnline = true;
+}
+
 /**
  * Hook that checks backend availability on mount.
  * Returns status + latency for the admin/debug badge.
@@ -20,9 +26,22 @@ export function useBackendStatus() {
     let cancelled = false;
 
     const check = async () => {
+      // If products already loaded successfully, skip health check
+      if (_backendConfirmedOnline) {
+        setStatus("online");
+        return;
+      }
+
       setStatus("checking");
       const result = await checkBackendHealth();
       if (cancelled) return;
+
+      // Re-check global flag (may have been set during health check)
+      if (_backendConfirmedOnline) {
+        setStatus("online");
+        return;
+      }
+
       setStatus(result.online ? "online" : "offline");
       setLatency(result.latency);
     };
