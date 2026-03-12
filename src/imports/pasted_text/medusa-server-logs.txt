@@ -1,0 +1,57 @@
+==> Downloading cache...
+==> Cloning from https://github.com/juliusgrafingelheim-ui/giradi-backend
+Menu
+==> Checking out commit e9fdfa1637abec27b1477c073a5f2d13625f1ac6 in branch main
+==> Downloaded 367MB in 3s. Extraction took 9s.
+==> Requesting Node.js version 20.x
+==> Using Node.js version 20.20.1 via /opt/render/project/src/package.json
+==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+==> Running build command 'echo "pre-built"'...
+pre-built
+==> Uploading build...
+==> Uploaded in 10.2s. Compression took 16.5s
+==> Build successful 🎉
+==> Deploying...
+==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+==> No open ports detected, continuing to scan...
+==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+==> Running 'cd .medusa/server && medusa start'
+==> No open ports detected, continuing to scan...
+==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+{"level":"info","message":"redisUrl not found. A fake redis instance will be used.","timestamp":"2026-03-12 13:53:57"}
+{"activity_id":"01KKH56N866M3QY3819DJ3FQJ8","config":{},"level":"info","message":"Creating server","timestamp":"2026-03-12 13:53:58"}
+{"level":"info","message":"redisUrl not found. A fake redis instance will be used.","timestamp":"2026-03-12 13:53:58"}
+{"level":"info","message":"Skipping instrumentation registration. No register function found.","timestamp":"2026-03-12 13:53:58"}
+{"level":"info","message":"redisUrl not found. A fake redis instance will be used.","timestamp":"2026-03-12 13:53:58"}
+(node:69) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"level":"info","message":"No link to load from /opt/render/project/src/.medusa/server/node_modules/@medusajs/draft-order/.medusa/server/src/links. skipped.","timestamp":"2026-03-12 13:53:59"}
+{"level":"info","message":"No link to load from /opt/render/project/src/.medusa/server/src/links. skipped.","timestamp":"2026-03-12 13:53:59"}
+{"level":"warn","message":"Local Event Bus installed. This is not recommended for production.","timestamp":"2026-03-12 13:54:03"}
+{"level":"info","message":"Locking module: Using \"in-memory\" as default.","timestamp":"2026-03-12 13:54:03"}
+{"level":"info","message":"No workflow to load from /opt/render/project/src/.medusa/server/node_modules/@medusajs/draft-order/.medusa/server/src/workflows. skipped.","timestamp":"2026-03-12 13:54:17"}
+{"level":"info","message":"No workflow to load from /opt/render/project/src/.medusa/server/src/workflows. skipped.","timestamp":"2026-03-12 13:54:17"}
+{"level":"info","message":"No subscriber to load from /opt/render/project/src/.medusa/server/node_modules/@medusajs/draft-order/.medusa/server/src/subscribers. skipped.","timestamp":"2026-03-12 13:54:17"}
+{"level":"info","message":"No subscriber to load from /opt/render/project/src/.medusa/server/src/subscribers. skipped.","timestamp":"2026-03-12 13:54:17"}
+{"level":"info","message":"No job to load from /opt/render/project/src/.medusa/server/node_modules/@medusajs/medusa/dist/jobs. skipped.","timestamp":"2026-03-12 13:54:26"}
+{"level":"info","message":"No job to load from /opt/render/project/src/.medusa/server/src/jobs. skipped.","timestamp":"2026-03-12 13:54:26"}
+{"level":"info","message":"No job to load from /opt/render/project/src/.medusa/server/node_modules/@medusajs/draft-order/.medusa/server/src/jobs. skipped.","timestamp":"2026-03-12 13:54:26"}
+Warning: connect.session() MemoryStore is not
+designed for a production environment, as it will leak
+memory, and will not scale past a single process.
+{"activity_id":"01KKH56N866M3QY3819DJ3FQJ8","duration":38407,"level":"info","message":"Server is ready on port: 10000","timestamp":"2026-03-12 13:54:36"}
+{"level":"http","client_ip":"::1","request_id":"5f727870-7f9d-4462-9853-841a8c5bda4d","http_version":"1.1","method":"HEAD","path":"/","status":404,"response_size":140,"request_size":0,"duration":215.489,"referrer":"-","user_agent":"Go-http-client/1.1","timestamp":"2026-03-12T13:54:36.731Z"}
+==> Your service is live 🎉
+{"level":"http","client_ip":"10.19.62.41","request_id":"2ee7594b-2aa3-42ac-97f9-fc9f59274b95","http_version":"1.1","method":"GET","path":"/","status":404,"response_size":139,"request_size":0,"duration":5.709,"referrer":"-","user_agent":"Go-http-client/2.0","timestamp":"2026-03-12T13:54:41.571Z"}
+==> 
+==> ///////////////////////////////////////////////////////////
+==> 
+==> Available at your primary URL https://giradi-backend.onrender.com
+==> 
+==> ///////////////////////////////////////////////////////////
+{"level":"http","client_ip":"10.23.116.193","request_id":"61191256-6ac9-4af5-9810-100ecbdb6daa","http_version":"1.1","method":"GET","path":"/","status":404,"response_size":139,"request_size":0,"duration":1.613,"referrer":"-","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","timestamp":"2026-03-12T13:55:11.275Z"}

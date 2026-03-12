@@ -1,0 +1,84 @@
+==> Downloading cache...
+Menu
+==> Cloning from https://github.com/juliusgrafingelheim-ui/giradi-backend
+==> Checking out commit 31409379804c3b2150bace73d1b25c227c92e090 in branch main
+==> Downloaded 301MB in 3s. Extraction took 11s.
+==> Requesting Node.js version 20.x
+==> Using Node.js version 20.20.1 via /opt/render/project/src/package.json
+==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+==> Running build command 'npm install --include=dev && npm run build && cd .medusa/server && npm install'...
+up to date, audited 1525 packages in 23m
+128 packages are looking for funding
+  run `npm fund` for details
+61 moderate severity vulnerabilities
+To address issues that do not require attention, run:
+  npm audit fix
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+Run `npm audit` for details.
+> medusa-server@0.0.1 build
+> medusa build
+{"level":"info","message":"redisUrl not found. A fake redis instance will be used.","timestamp":"2026-03-12 10:02:02"}
+{"level":"info","message":"Generating types...","timestamp":"2026-03-12 10:02:02"}
+{"level":"info","message":"No link to load from /opt/render/project/src/node_modules/@medusajs/draft-order/.medusa/server/src/links. skipped.","timestamp":"2026-03-12 10:02:02"}
+{"level":"info","message":"Types generated successfully","timestamp":"2026-03-12 10:02:03"}
+{"level":"info","message":"Starting build...","timestamp":"2026-03-12 10:02:03"}
+{"level":"info","message":"Compiling backend source...","timestamp":"2026-03-12 10:02:03"}
+{"level":"info","message":"Removing existing \".medusa/server\" folder","timestamp":"2026-03-12 10:02:03"}
+{"level":"info","message":"Compiling frontend source...","timestamp":"2026-03-12 10:02:07"}
+{"level":"info","message":"Backend build completed successfully (3.97s)","timestamp":"2026-03-12 10:02:07"}
+{"level":"info","message":"Frontend build completed successfully (17.99s)","timestamp":"2026-03-12 10:02:25"}
+added 1524 packages, and audited 1525 packages in 35s
+128 packages are looking for funding
+  run `npm fund` for details
+61 moderate severity vulnerabilities
+To address issues that do not require attention, run:
+  npm audit fix
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+Run `npm audit` for details.
+==> Uploading build...
+==> Uploaded in 8.3s. Compression took 30.0s
+==> Build successful 🎉
+==> Deploying...
+==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+==> No open ports detected, continuing to scan...
+==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+==> Running 'cd .medusa/server && medusa start'
+{"level":"info","message":"redisUrl not found. A fake redis instance will be used.","timestamp":"2026-03-12 10:06:52"}
+{"activity_id":"01KKGR6V1GGSK7531N21HGCCYV","config":{},"level":"info","message":"Creating server","timestamp":"2026-03-12 10:06:52"}
+{"level":"info","message":"redisUrl not found. A fake redis instance will be used.","timestamp":"2026-03-12 10:06:52"}
+{"level":"info","message":"Skipping instrumentation registration. No register function found.","timestamp":"2026-03-12 10:06:52"}
+{"level":"info","message":"redisUrl not found. A fake redis instance will be used.","timestamp":"2026-03-12 10:06:52"}
+(node:67) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"level":"info","message":"No link to load from /opt/render/project/src/.medusa/server/node_modules/@medusajs/draft-order/.medusa/server/src/links. skipped.","timestamp":"2026-03-12 10:06:53"}
+{"level":"info","message":"No link to load from /opt/render/project/src/.medusa/server/src/links. skipped.","timestamp":"2026-03-12 10:06:53"}
+{"level":"warn","message":"Local Event Bus installed. This is not recommended for production.","timestamp":"2026-03-12 10:06:57"}
+{"level":"info","message":"Locking module: Using \"in-memory\" as default.","timestamp":"2026-03-12 10:06:57"}
+{"level":"info","message":"No workflow to load from /opt/render/project/src/.medusa/server/node_modules/@medusajs/draft-order/.medusa/server/src/workflows. skipped.","timestamp":"2026-03-12 10:07:12"}
+{"level":"info","message":"No workflow to load from /opt/render/project/src/.medusa/server/src/workflows. skipped.","timestamp":"2026-03-12 10:07:12"}
+{"level":"info","message":"No subscriber to load from /opt/render/project/src/.medusa/server/node_modules/@medusajs/draft-order/.medusa/server/src/subscribers. skipped.","timestamp":"2026-03-12 10:07:12"}
+{"level":"info","message":"No subscriber to load from /opt/render/project/src/.medusa/server/src/subscribers. skipped.","timestamp":"2026-03-12 10:07:12"}
+==> No open ports detected, continuing to scan...
+==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+{"level":"info","message":"No job to load from /opt/render/project/src/.medusa/server/node_modules/@medusajs/medusa/dist/jobs. skipped.","timestamp":"2026-03-12 10:07:20"}
+{"level":"info","message":"No job to load from /opt/render/project/src/.medusa/server/node_modules/@medusajs/draft-order/.medusa/server/src/jobs. skipped.","timestamp":"2026-03-12 10:07:20"}
+{"level":"info","message":"No job to load from /opt/render/project/src/.medusa/server/src/jobs. skipped.","timestamp":"2026-03-12 10:07:20"}
+Warning: connect.session() MemoryStore is not
+designed for a production environment, as it will leak
+memory, and will not scale past a single process.
+{"activity_id":"01KKGR6V1GGSK7531N21HGCCYV","duration":36902,"level":"info","message":"Server is ready on port: 10000","timestamp":"2026-03-12 10:07:29"}
+{"level":"http","client_ip":"::1","request_id":"8f95444c-21ed-48d4-988e-087fa425e719","http_version":"1.1","method":"HEAD","path":"/","status":404,"response_size":140,"request_size":0,"duration":66.318,"referrer":"-","user_agent":"Go-http-client/1.1","timestamp":"2026-03-12T10:07:29.658Z"}
+==> Your service is live 🎉
+==> 
+==> ///////////////////////////////////////////////////////////
+==> 
+==> Available at your primary URL https://giradi-backend.onrender.com
+==> 
+==> ///////////////////////////////////////////////////////////

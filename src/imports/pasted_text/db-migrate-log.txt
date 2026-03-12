@@ -1,0 +1,522 @@
+@juliusgrafingelheim-ui ➜ /workspaces/giradi-backend (main) $ DATABASE_URL="postgresql://neondb_owner:npg_ZUoR8cXiFH1L@ep-holy-night-alysnll9-pooler.c-3.eu-central-1.aws.neon.tech/neondb?sslmode=require" npx medusa db:migrate
+npm warn Unknown project config "public-hoist-pattern". This will stop working in the next major version of npm.
+info:    redisUrl not found. A fake redis instance will be used.
+(node:33624) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+info:    No link to load from /workspaces/giradi-backend/node_modules/@medusajs/draft-order/.medusa/server/src/links. skipped.
+info:    Running migrations...
+info:    Creating migrations table 'mikro_orm_migrations'...
+info:    Migrations table created successfully
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: stock_location
+info:      ● Migrating Migration20240307161216
+info:      ✔ Migrated Migration20240307161216
+info:      ● Migrating Migration20241210073813
+info:      ✔ Migrated Migration20241210073813
+info:      ● Migrating Migration20250106142624
+info:      ✔ Migrated Migration20250106142624
+info:      ● Migrating Migration20250120110820
+info:      ✔ Migrated Migration20250120110820
+info:    Completed successfully
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: inventory
+info:      ● Migrating Migration20240307132720
+info:      ✔ Migrated Migration20240307132720
+info:      ● Migrating Migration20240719123015
+info:      ✔ Migrated Migration20240719123015
+info:      ● Migrating Migration20241213063611
+info:      ✔ Migrated Migration20241213063611
+info:      ● Migrating Migration20251010131115
+info:      ✔ Migrated Migration20251010131115
+info:    Completed successfully
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: product
+info:      ● Migrating InitialSetup20240401153642
+info:      ✔ Migrated InitialSetup20240401153642
+info:      ● Migrating Migration20240601111544
+info:      ✔ Migrated Migration20240601111544
+info:      ● Migrating Migration202408271511
+info:      ✔ Migrated Migration202408271511
+info:      ● Migrating Migration20241122120331
+info:      ✔ Migrated Migration20241122120331
+info:      ● Migrating Migration20241125090957
+info:      ✔ Migrated Migration20241125090957
+info:      ● Migrating Migration20250411073236
+info:      ✔ Migrated Migration20250411073236
+info:      ● Migrating Migration20250516081326
+info:      ✔ Migrated Migration20250516081326
+info:      ● Migrating Migration20250910154539
+info:      ✔ Migrated Migration20250910154539
+info:      ● Migrating Migration20250911092221
+info:      ✔ Migrated Migration20250911092221
+info:      ● Migrating Migration20250929204438
+info:      ✔ Migrated Migration20250929204438
+info:      ● Migrating Migration20251008132218
+info:      ✔ Migrated Migration20251008132218
+info:      ● Migrating Migration20251011090511
+info:      ✔ Migrated Migration20251011090511
+info:    Completed successfully
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: pricing
+info:      ● Migrating Migration20230929122253
+info:      ✔ Migrated Migration20230929122253
+info:      ● Migrating Migration20240322094407
+info:      ✔ Migrated Migration20240322094407
+info:      ● Migrating Migration20240322113359
+info:      ✔ Migrated Migration20240322113359
+info:      ● Migrating Migration20240322120125
+info:      ✔ Migrated Migration20240322120125
+info:      ● Migrating Migration20240626133555
+info:      ✔ Migrated Migration20240626133555
+info:      ● Migrating Migration20240704094505
+info:      ✔ Migrated Migration20240704094505
+info:      ● Migrating Migration20241127114534
+info:      ✔ Migrated Migration20241127114534
+info:      ● Migrating Migration20241127223829
+info:      ✔ Migrated Migration20241127223829
+info:      ● Migrating Migration20241128055359
+info:      ✔ Migrated Migration20241128055359
+info:      ● Migrating Migration20241212190401
+info:      ✔ Migrated Migration20241212190401
+info:      ● Migrating Migration20250408145122
+info:      ✔ Migrated Migration20250408145122
+info:      ● Migrating Migration20250409122219
+info:      ✔ Migrated Migration20250409122219
+info:      ● Migrating Migration20251009110625
+info:      ✔ Migrated Migration20251009110625
+info:      ● Migrating Migration20251112192723
+info:      ✔ Migrated Migration20251112192723
+info:    Completed successfully
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: promotion
+info:      ● Migrating Migration20240227120221
+info:      ✔ Migrated Migration20240227120221
+info:      ● Migrating Migration20240617102917
+info:      ✔ Migrated Migration20240617102917
+info:      ● Migrating Migration20240624153824
+info:      ✔ Migrated Migration20240624153824
+info:      ● Migrating Migration20241211061114
+info:      ✔ Migrated Migration20241211061114
+info:      ● Migrating Migration20250113094144
+info:      ✔ Migrated Migration20250113094144
+info:      ● Migrating Migration20250120110700
+info:      ✔ Migrated Migration20250120110700
+info:      ● Migrating Migration20250226130616
+info:      ✔ Migrated Migration20250226130616
+info:      ● Migrating Migration20250508081510
+info:      ✔ Migrated Migration20250508081510
+info:      ● Migrating Migration20250828075407
+info:      ✔ Migrated Migration20250828075407
+info:      ● Migrating Migration20250909083125
+info:      ✔ Migrated Migration20250909083125
+info:      ● Migrating Migration20250916120552
+info:      ✔ Migrated Migration20250916120552
+info:      ● Migrating Migration20250917143818
+info:      ✔ Migrated Migration20250917143818
+info:      ● Migrating Migration20250919122137
+info:      ✔ Migrated Migration20250919122137
+info:      ● Migrating Migration20251006000000
+info:      ✔ Migrated Migration20251006000000
+info:      ● Migrating Migration20251015113934
+info:      ✔ Migrated Migration20251015113934
+info:      ● Migrating Migration20251107050148
+info:      ✔ Migrated Migration20251107050148
+info:    Completed successfully
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: customer
+info:      ● Migrating Migration20240124154000
+info:      ✔ Migrated Migration20240124154000
+info:      ● Migrating Migration20240524123112
+info:      ✔ Migrated Migration20240524123112
+info:      ● Migrating Migration20240602110946
+info:      ✔ Migrated Migration20240602110946
+info:      ● Migrating Migration20241211074630
+info:      ✔ Migrated Migration20241211074630
+info:      ● Migrating Migration20251010130829
+info:      ✔ Migrated Migration20251010130829
+info:    Completed successfully
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: sales_channel
+info:      ● Migrating Migration20240115152146
+info:      ✔ Migrated Migration20240115152146
+info:    Completed successfully
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: cart
+info:      ● Migrating Migration20240222170223
+info:      ✔ Migrated Migration20240222170223
+info:      ● Migrating Migration20240831125857
+info:      ✔ Migrated Migration20240831125857
+info:      ● Migrating Migration20241106085918
+info:      ✔ Migrated Migration20241106085918
+info:      ● Migrating Migration20241205095237
+info:      ✔ Migrated Migration20241205095237
+info:      ● Migrating Migration20241216183049
+info:      ✔ Migrated Migration20241216183049
+info:      ● Migrating Migration20241218091938
+info:      ✔ Migrated Migration20241218091938
+info:      ● Migrating Migration20250120115059
+info:      ✔ Migrated Migration20250120115059
+info:      ● Migrating Migration20250212131240
+info:      ✔ Migrated Migration20250212131240
+info:      ● Migrating Migration20250326151602
+info:      ✔ Migrated Migration20250326151602
+info:      ● Migrating Migration20250508081553
+info:      ✔ Migrated Migration20250508081553
+info:      ● Migrating Migration20251017153909
+info:      ✔ Migrated Migration20251017153909
+info:      ● Migrating Migration20251208130704
+info:      ✔ Migrated Migration20251208130704
+info:    Completed successfully
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: region
+info:      ● Migrating Migration20240205173216
+info:      ✔ Migrated Migration20240205173216
+info:      ● Migrating Migration20240624200006
+info:      ✔ Migrated Migration20240624200006
+info:      ● Migrating Migration20250120110744
+info:      ✔ Migrated Migration20250120110744
+info:    Completed successfully
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: api_key
+info:      ● Migrating InitialSetup20240221144943
+info:      ✔ Migrated InitialSetup20240221144943
+info:      ● Migrating Migration20240604080145
+info:      ✔ Migrated Migration20240604080145
+info:      ● Migrating Migration20241205122700
+info:      ✔ Migrated Migration20241205122700
+info:      ● Migrating Migration20251015123842
+info:      ✔ Migrated Migration20251015123842
+info:    Completed successfully
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: store
+info:      ● Migrating InitialSetup20240227075933
+info:      ✔ Migrated InitialSetup20240227075933
+info:      ● Migrating Migration20240621145944
+info:      ✔ Migrated Migration20240621145944
+info:      ● Migrating Migration20241206083313
+info:      ✔ Migrated Migration20241206083313
+info:      ● Migrating Migration20251202184737
+info:      ✔ Migrated Migration20251202184737
+info:      ● Migrating Migration20251212161429
+info:      ✔ Migrated Migration20251212161429
+info:    Completed successfully
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: tax
+info:      ● Migrating Migration20240227090331
+info:      ✔ Migrated Migration20240227090331
+info:      ● Migrating Migration20240710135844
+info:      ✔ Migrated Migration20240710135844
+info:      ● Migrating Migration20240924114005
+info:      ✔ Migrated Migration20240924114005
+info:      ● Migrating Migration20241212052837
+info:      ✔ Migrated Migration20241212052837
+info:    Completed successfully
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: currency
+info:      ● Migrating InitialSetup20240228133303
+info:      ✔ Migrated InitialSetup20240228133303
+info:      ● Migrating Migration20240624082354
+info:      ✔ Migrated Migration20240624082354
+info:    Completed successfully
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: payment
+info:      ● Migrating Migration20240225134525
+info:      ✔ Migrated Migration20240225134525
+info:      ● Migrating Migration20240806072619
+info:      ✔ Migrated Migration20240806072619
+info:      ● Migrating Migration20241211151053
+info:      ✔ Migrated Migration20241211151053
+info:      ● Migrating Migration20250115160517
+info:      ✔ Migrated Migration20250115160517
+info:      ● Migrating Migration20250120110552
+info:      ✔ Migrated Migration20250120110552
+info:      ● Migrating Migration20250123122334
+info:      ✔ Migrated Migration20250123122334
+info:      ● Migrating Migration20250206105639
+info:      ✔ Migrated Migration20250206105639
+info:      ● Migrating Migration20250207132723
+info:      ✔ Migrated Migration20250207132723
+info:      ● Migrating Migration20250625084134
+info:      ✔ Migrated Migration20250625084134
+info:      ● Migrating Migration20250924135437
+info:      ✔ Migrated Migration20250924135437
+info:      ● Migrating Migration20250929124701
+info:      ✔ Migrated Migration20250929124701
+info:    Completed successfully
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: order
+info:      ● Migrating Migration20240219102530
+info:      ✔ Migrated Migration20240219102530
+info:      ● Migrating Migration20240604100512
+info:      ✔ Migrated Migration20240604100512
+info:      ● Migrating Migration20240715102100
+info:      ✔ Migrated Migration20240715102100
+info:      ● Migrating Migration20240715174100
+info:      ✔ Migrated Migration20240715174100
+info:      ● Migrating Migration20240716081800
+info:      ✔ Migrated Migration20240716081800
+info:      ● Migrating Migration20240801085921
+info:      ✔ Migrated Migration20240801085921
+info:      ● Migrating Migration20240821164505
+info:      ✔ Migrated Migration20240821164505
+info:      ● Migrating Migration20240821170920
+info:      ✔ Migrated Migration20240821170920
+info:      ● Migrating Migration20240827133639
+info:      ✔ Migrated Migration20240827133639
+info:      ● Migrating Migration20240902195921
+info:      ✔ Migrated Migration20240902195921
+info:      ● Migrating Migration20240913092514
+info:      ✔ Migrated Migration20240913092514
+info:      ● Migrating Migration20240930122627
+info:      ✔ Migrated Migration20240930122627
+info:      ● Migrating Migration20241014142943
+info:      ✔ Migrated Migration20241014142943
+info:      ● Migrating Migration20241106085223
+info:      ✔ Migrated Migration20241106085223
+info:      ● Migrating Migration20241129124827
+info:      ✔ Migrated Migration20241129124827
+info:      ● Migrating Migration20241217162224
+info:      ✔ Migrated Migration20241217162224
+info:      ● Migrating Migration20250326151554
+info:      ✔ Migrated Migration20250326151554
+info:      ● Migrating Migration20250522181137
+info:      ✔ Migrated Migration20250522181137
+info:      ● Migrating Migration20250702095353
+info:      ✔ Migrated Migration20250702095353
+info:      ● Migrating Migration20250704120229
+info:      ✔ Migrated Migration20250704120229
+info:      ● Migrating Migration20250910130000
+info:      ✔ Migrated Migration20250910130000
+info:      ● Migrating Migration20251016160403
+info:      ✔ Migrated Migration20251016160403
+info:      ● Migrating Migration20251016182939
+info:      ✔ Migrated Migration20251016182939
+info:      ● Migrating Migration20251017155709
+info:      ✔ Migrated Migration20251017155709
+info:      ● Migrating Migration20251114100559
+info:      ✔ Migrated Migration20251114100559
+info:      ● Migrating Migration20251125164002
+info:      ✔ Migrated Migration20251125164002
+info:      ● Migrating Migration20251210112909
+info:      ✔ Migrated Migration20251210112909
+info:      ● Migrating Migration20251210112924
+info:      ✔ Migrated Migration20251210112924
+info:      ● Migrating Migration20251225120947
+info:      ✔ Migrated Migration20251225120947
+info:    Completed successfully
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: settings
+info:      ● Migrating Migration20250717162007
+info:      ✔ Migrated Migration20250717162007
+info:    Completed successfully
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: auth
+info:      ● Migrating Migration20240205025928
+info:      ✔ Migrated Migration20240205025928
+info:      ● Migrating Migration20240529080336
+info:      ✔ Migrated Migration20240529080336
+info:      ● Migrating Migration20241202100304
+info:      ✔ Migrated Migration20241202100304
+info:    Completed successfully
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: auth
+info:    Skipped. Database is up-to-date for module.
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: auth
+info:    Skipped. Database is up-to-date for module.
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: user
+info:      ● Migrating Migration20240214033943
+info:      ✔ Migrated Migration20240214033943
+info:      ● Migrating Migration20240703095850
+Note: If the index "IDX_user_email" fails to create, then delete any existing users with duplicate emails before retrying the migration.
+info:      ✔ Migrated Migration20240703095850
+info:      ● Migrating Migration20241202103352
+info:      ✔ Migrated Migration20241202103352
+info:    Completed successfully
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: fulfillment
+info:      ● Migrating Migration20240311145700_InitialSetupMigration
+info:      ✔ Migrated Migration20240311145700_InitialSetupMigration
+info:      ● Migrating Migration20240821170957
+info:      ✔ Migrated Migration20240821170957
+info:      ● Migrating Migration20240917161003
+info:      ✔ Migrated Migration20240917161003
+info:      ● Migrating Migration20241217110416
+info:      ✔ Migrated Migration20241217110416
+info:      ● Migrating Migration20250113122235
+info:      ✔ Migrated Migration20250113122235
+info:      ● Migrating Migration20250120115002
+info:      ✔ Migrated Migration20250120115002
+info:      ● Migrating Migration20250822130931
+info:      ✔ Migrated Migration20250822130931
+info:      ● Migrating Migration20250825132614
+info:      ✔ Migrated Migration20250825132614
+info:      ● Migrating Migration20251114133146
+info:      ✔ Migrated Migration20251114133146
+info:    Completed successfully
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: fulfillment
+info:    Skipped. Database is up-to-date for module.
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: fulfillment
+info:    Skipped. Database is up-to-date for module.
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: notification
+info:      ● Migrating Migration20240509083918_InitialSetupMigration
+info:      ✔ Migrated Migration20240509083918_InitialSetupMigration
+info:      ● Migrating Migration20240628075401
+info:      ✔ Migrated Migration20240628075401
+info:      ● Migrating Migration20240830094712
+info:      ✔ Migrated Migration20240830094712
+info:      ● Migrating Migration20250120110514
+info:      ✔ Migrated Migration20250120110514
+info:      ● Migrating Migration20251028172715
+info:      ✔ Migrated Migration20251028172715
+info:      ● Migrating Migration20251121123942
+info:      ✔ Migrated Migration20251121123942
+info:      ● Migrating Migration20251121150408
+info:      ✔ Migrated Migration20251121150408
+info:    Completed successfully
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: notification
+info:    Skipped. Database is up-to-date for module.
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: notification
+info:    Skipped. Database is up-to-date for module.
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: cache
+info:    Skipped. Database is up-to-date for module.
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: event_bus
+info:    Skipped. Database is up-to-date for module.
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: workflows
+info:      ● Migrating Migration20231228143900
+info:      ✔ Migrated Migration20231228143900
+info:      ● Migrating Migration20241206101446
+info:      ✔ Migrated Migration20241206101446
+info:      ● Migrating Migration20250128174331
+info:      ✔ Migrated Migration20250128174331
+info:      ● Migrating Migration20250505092459
+info:      ✔ Migrated Migration20250505092459
+info:      ● Migrating Migration20250819104213
+info:      ✔ Migrated Migration20250819104213
+info:      ● Migrating Migration20250819110924
+info:      ✔ Migrated Migration20250819110924
+info:      ● Migrating Migration20250908080305
+info:      ✔ Migrated Migration20250908080305
+info:    Completed successfully
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: locking
+info:    Skipped. Database is up-to-date for module.
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: file
+info:    Skipped. Database is up-to-date for module.
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: file
+info:    Skipped. Database is up-to-date for module.
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    
+info:    MODULE: file
+info:    Skipped. Database is up-to-date for module.
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    Migrations completed
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    Syncing links...
+info:    ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                                                                                     │
+│   Created following links tables                                                                    │
+│     - cart.cart <> payment.payment_collection (cart_payment_collection)                             │
+│     - cart.cart <> promotion.promotions (cart_promotion)                                            │
+│     - customer.customer <> payment.account_holder (customer_account_holder)                         │
+│     - stock_location.location <> fulfillment.fulfillment_provider (location_fulfillment_provider)   │
+│     - stock_location.location <> fulfillment.fulfillment_set (location_fulfillment_set)             │
+│     - order.order <> cart.cart (order_cart)                                                         │
+│     - order.order <> fulfillment.fulfillments (order_fulfillment)                                   │
+│     - order.order <> payment.payment_collection (order_payment_collection)                          │
+│     - order.order <> promotion.promotions (order_promotion)                                         │
+│     - order.return <> fulfillment.fulfillments (return_fulfillment)                                 │
+│     - product.product <> sales_channel.sales_channel (product_sales_channel)                        │
+│     - product.product <> fulfillment.shipping_profile (product_shipping_profile)                    │
+│     - product.variant <> inventory.inventory (product_variant_inventory_item)                       │
+│     - product.variant <> pricing.price_set (product_variant_price_set)                              │
+│     - api_key.api_key <> sales_channel.sales_channel (publishable_api_key_sales_channel)            │
+│     - region.region <> payment.payment_provider (region_payment_provider)                           │
+│     - sales_channel.sales_channel <> stock_location.location (sales_channel_stock_location)         │
+│     - fulfillment.shipping_option <> pricing.price_set (shipping_option_price_set)                  │
+│     - user.user <> rbac.rbac_role (user_rbac_role)                                                  │
+│                                                                                                     │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+info:    Links sync completed
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    redisUrl not found. A fake redis instance will be used.
+(node:33990) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+info:    No link to load from /workspaces/giradi-backend/node_modules/@medusajs/draft-order/.medusa/server/src/links. skipped.
+warn:    Local Event Bus installed. This is not recommended for production.
+info:    Locking module: Using "in-memory" as default.
+info:    Creating migrations table 'script_migrations'...
+info:    Migrations table created successfully
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    Pending migration scripts to execute
+info:    /workspaces/giradi-backend/node_modules/@medusajs/medusa/dist/migration-scripts/migrate-product-shipping-profile.js
+/workspaces/giradi-backend/node_modules/@medusajs/medusa/dist/migration-scripts/migrate-tax-region-provider.js
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    Running migration scripts...
+info:    Running migration script /workspaces/giradi-backend/node_modules/@medusajs/medusa/dist/migration-scripts/migrate-product-shipping-profile.js
+info:    Assigning products to shipping profile
+info:    Products assigned to shipping profile
+info:    Migration script /workspaces/giradi-backend/node_modules/@medusajs/medusa/dist/migration-scripts/migrate-product-shipping-profile.js completed (0.10s)
+info:    Running migration script /workspaces/giradi-backend/node_modules/@medusajs/medusa/dist/migration-scripts/migrate-tax-region-provider.js
+info:    Assigning tax system provider to tax regions
+info:    System provider assigned to tax regions
+info:    Migration script /workspaces/giradi-backend/node_modules/@medusajs/medusa/dist/migration-scripts/migrate-tax-region-provider.js completed (0.04s)
+info:    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+info:    Migration scripts completed
