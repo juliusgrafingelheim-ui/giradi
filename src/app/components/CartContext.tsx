@@ -7,6 +7,7 @@ import {
   updateLineItem,
   removeLineItem,
   clearStoredCartId,
+  validateCart,
   type MedusaCart,
 } from "./api/medusa-client";
 
@@ -72,23 +73,74 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Ensure we have a Medusa cart (lazy-create on first add)
   const ensureMedusaCart = useCallback(async (): Promise<string | null> => {
     if (!IS_BACKEND_ENABLED) return null;
-    if (medusaCartId) return medusaCartId;
 
     setSyncing(true);
     try {
-      const cart = await getOrCreateCart();
-      if (cart) {
-        setMedusaCartId(cart.id);
-        console.log("[Cart] Medusa cart ready:", cart.id);
-        return cart.id;
+      // 1. If we have an existing cart ID, validate it's still alive
+      if (medusaCartId) {
+        const existingCart = await validateCart(medusaCartId);
+        if (existingCart) {
+          console.log("[Cart] Existing Medusa cart validated:", medusaCartId);
+          setSyncing(false);
+          return medusaCartId;
+        }
+        // Cart is gone (404/completed/expired) – clear and recreate
+        console.warn("[Cart] Cart", medusaCartId, "is stale (404). Recreating...");
+        clearStoredCartId();
+        setMedusaCartId(null);
       }
+
+      // 2. Create a fresh cart
+      const newCart = await getOrCreateCart();
+      if (!newCart) {
+        console.warn("[Cart] Failed to create new Medusa cart");
+        return null;
+      }
+
+      const newCartId = newCart.id;
+      setMedusaCartId(newCartId);
+      console.log("[Cart] New Medusa cart created:", newCartId);
+
+      // 3. Re-add all local items to the new cart
+      // We need to read items from the current state snapshot
+      const currentItems = items;
+      if (currentItems.length > 0) {
+        console.log("[Cart] Re-syncing", currentItems.length, "item(s) to new cart...");
+        for (const item of currentItems) {
+          const variantId = getVariantId(item.product);
+          if (!variantId) continue;
+          try {
+            const updatedCart = await addToCart(newCartId, variantId, item.quantity);
+            if (updatedCart) {
+              // Update line item ID for this product
+              const lineItem = updatedCart.items?.find(
+                (li: any) => li.variant_id === variantId || li.variant?.id === variantId
+              );
+              if (lineItem) {
+                setItems((prev) =>
+                  prev.map((i) =>
+                    i.product.id === item.product.id
+                      ? { ...i, _lineItemId: lineItem.id }
+                      : i
+                  )
+                );
+              }
+              console.log("[Cart] Re-synced:", item.product.name, "×", item.quantity);
+            }
+          } catch (err) {
+            console.warn("[Cart] Failed to re-sync item:", item.product.name, err);
+          }
+        }
+      }
+
+      return newCartId;
     } catch (err) {
-      console.warn("[Cart] Failed to create Medusa cart:", err);
+      console.warn("[Cart] Failed to ensure Medusa cart:", err);
+      return null;
     } finally {
       setSyncing(false);
     }
-    return null;
-  }, [medusaCartId]);
+  }, [medusaCartId, items]);
 
   // On mount: restore cart from localStorage if backend is enabled
   useEffect(() => {

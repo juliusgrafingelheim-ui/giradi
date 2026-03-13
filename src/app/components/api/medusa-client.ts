@@ -232,10 +232,25 @@ export async function getOrCreateCart(): Promise<MedusaCart | null> {
     );
     if (data?.cart) return data.cart;
     // Cart expired or invalid – create new
+    console.warn(`[Medusa] Stored cart ${existingId} is gone (404/expired), creating new cart`);
     clearStoredCartId();
   }
 
   return createCart();
+}
+
+/**
+ * Validate that a cart still exists on the backend.
+ * Returns the cart if valid, null if expired/completed/404.
+ */
+export async function validateCart(
+  cartId: string
+): Promise<MedusaCart | null> {
+  if (!IS_BACKEND_ENABLED || !cartId) return null;
+  const data = await medusaFetch<{ cart: MedusaCart }>(
+    `/carts/${cartId}`
+  );
+  return data?.cart || null;
 }
 
 /** Add item to cart */

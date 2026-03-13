@@ -286,8 +286,9 @@ export function CheckoutPage() {
     if (!validate()) return;
 
     if (IS_BACKEND_ENABLED) {
-      // Ensure Medusa cart exists and is synced
-      const cartId = medusaCartId || (await ensureMedusaCart());
+      // Always go through ensureMedusaCart – it validates existing carts
+      // and recreates + re-syncs items if the old cart is gone (404)
+      const cartId = await ensureMedusaCart();
       if (cartId) {
         await handleMedusaCheckout(cartId);
       } else {
