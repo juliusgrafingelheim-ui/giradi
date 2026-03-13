@@ -1,7 +1,7 @@
 import { Outlet, Link, useLocation } from "react-router";
 import { ShoppingBag, Menu, X, MapPin, Phone, Mail } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useCart, CartProvider } from "./CartContext";
+import { useCart } from "./CartContext";
 import { CartDrawer } from "./CartDrawer";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -15,11 +15,7 @@ const navLinks = [
 ];
 
 export function Layout() {
-  return (
-    <CartProvider>
-      <LayoutInner />
-    </CartProvider>
-  );
+  return <LayoutInner />;
 }
 
 function LayoutInner() {

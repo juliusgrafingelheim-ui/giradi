@@ -4,7 +4,6 @@ import {
   fetchShippingOptions,
   fetchCartForCheckout,
   initPaymentSession,
-  initPaymentSessions,
   completeCart,
   forceNewCart,
   addToCart,
@@ -172,11 +171,23 @@ export function CheckoutPage() {
         phone: form.phone || undefined,
       };
 
+      console.log("[Checkout] Payload:", JSON.stringify({
+        email: form.email,
+        shipping_address: shippingAddress,
+        billing_address: shippingAddress,
+      }, null, 2));
+
       let cartUpdate = await updateCart(activeCartId, {
         email: form.email,
         shipping_address: shippingAddress,
         billing_address: shippingAddress,
       });
+
+      console.log("[Checkout] Cart update response:", JSON.stringify({
+        email: cartUpdate?.email,
+        shipping_address: cartUpdate?.shipping_address,
+        billing_address: cartUpdate?.billing_address,
+      }, null, 2));
 
       // If update failed (404 – stale/completed cart), recover with a new cart
       if (!cartUpdate) {
@@ -249,21 +260,6 @@ export function CheckoutPage() {
           const fullCart = await fetchCartForCheckout(activeCartId);
           console.log("[Checkout] Full cart payment_collection:", fullCart?.payment_collection);
           paymentCollectionId = fullCart?.payment_collection?.id;
-        }
-
-        // Fallback: try initializing payment sessions on the cart directly
-        // Some Medusa v2 versions need an explicit POST to /carts/:id/payment-sessions
-        if (!paymentCollectionId) {
-          console.log("[Checkout] Trying initPaymentSessions fallback...");
-          const cartWithPayment = await initPaymentSessions(activeCartId);
-          console.log("[Checkout] initPaymentSessions result:", cartWithPayment);
-          paymentCollectionId = cartWithPayment?.payment_collection?.id;
-
-          // If still no payment collection, try one more re-fetch
-          if (!paymentCollectionId && cartWithPayment) {
-            const reFetched = await fetchCartForCheckout(activeCartId);
-            paymentCollectionId = reFetched?.payment_collection?.id;
-          }
         }
 
         if (paymentCollectionId) {

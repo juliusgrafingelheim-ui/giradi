@@ -115,11 +115,18 @@ async function medusaFetch<T>(
     const res = await fetch(`${STORE_API}${path}`, {
       ...options,
       headers: { ...headers, ...(options.headers as Record<string, string>) },
-      credentials: "include", // Medusa uses cookies for cart sessions
     });
 
     if (!res.ok) {
-      console.warn(`[Medusa] ${res.status} ${res.statusText} – ${path}`);
+      // Try to read error body for better debugging
+      let errorBody = "";
+      try {
+        const errJson = await res.json();
+        errorBody = JSON.stringify(errJson);
+      } catch {
+        try { errorBody = await res.text(); } catch { /* ignore */ }
+      }
+      console.warn(`[Medusa] ${res.status} ${res.statusText} – ${path}`, errorBody);
       return null;
     }
 
