@@ -1,7 +1,7 @@
 import { Outlet, Link, useLocation } from "react-router";
 import { ShoppingBag, Menu, X, MapPin, Phone, Mail } from "lucide-react";
 import { useState, useEffect } from "react";
-import { CartProvider, useCart } from "./CartContext";
+import { useCart } from "./CartContext";
 import { CartDrawer } from "./CartDrawer";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -15,14 +15,6 @@ const navLinks = [
 ];
 
 export function Layout() {
-  return (
-    <CartProvider>
-      <LayoutInner />
-    </CartProvider>
-  );
-}
-
-function LayoutInner() {
   const { totalItems, setIsOpen } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);

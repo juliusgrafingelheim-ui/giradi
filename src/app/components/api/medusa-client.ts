@@ -64,6 +64,10 @@ export interface MedusaCart {
   shipping_address?: MedusaAddress;
   billing_address?: MedusaAddress;
   payment_sessions?: MedusaPaymentSession[];
+  payment_collection?: {
+    id: string;
+    payment_sessions?: MedusaPaymentSession[];
+  };
 }
 
 export interface MedusaAddress {
@@ -309,6 +313,19 @@ export async function addShippingMethod(
       method: "POST",
       body: JSON.stringify({ option_id: optionId }),
     }
+  );
+  return data?.cart || null;
+}
+
+/**
+ * Fetch cart with payment_collection included.
+ * Medusa v2 requires explicit field expansion to include payment_collection.
+ */
+export async function fetchCartForCheckout(
+  cartId: string
+): Promise<MedusaCart | null> {
+  const data = await medusaFetch<{ cart: MedusaCart }>(
+    `/carts/${cartId}?fields=+payment_collection.payment_sessions,+payment_collection.id`
   );
   return data?.cart || null;
 }

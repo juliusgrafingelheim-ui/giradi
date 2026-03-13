@@ -21,6 +21,7 @@ import {
   updateCart,
   addShippingMethod,
   fetchShippingOptions,
+  fetchCartForCheckout,
   initPaymentSession,
   completeCart,
   type MedusaAddress,
@@ -181,9 +182,20 @@ export function CheckoutPage() {
         }
 
         // 3. Initialize payment session
-        // In Medusa v2, the cart gets a payment_collection after shipping is set
+        // In Medusa v2, the addShippingMethod response may not include payment_collection.
+        // We need to re-fetch the cart with expanded fields to get it.
         console.log("[Checkout] Step 3: Initializing payment...");
-        const paymentCollectionId = (cartWithShipping as any).payment_collection?.id;
+
+        // First check if it's already on the response
+        let paymentCollectionId = (cartWithShipping as any).payment_collection?.id;
+
+        // If not, fetch the cart again with payment_collection fields
+        if (!paymentCollectionId) {
+          console.log("[Checkout] Re-fetching cart to get payment_collection...");
+          const fullCart = await fetchCartForCheckout(cartId);
+          console.log("[Checkout] Full cart payment_collection:", fullCart?.payment_collection);
+          paymentCollectionId = fullCart?.payment_collection?.id;
+        }
 
         if (paymentCollectionId) {
           const paymentSession = await initPaymentSession(
@@ -195,8 +207,15 @@ export function CheckoutPage() {
             }
           );
           console.log("[Checkout] Payment session:", paymentSession);
+
+          if (!paymentSession) {
+            throw new Error("Zahlungssitzung konnte nicht erstellt werden. Bitte versuchen Sie es erneut.");
+          }
         } else {
-          console.warn("[Checkout] No payment_collection on cart – trying complete anyway");
+          console.warn("[Checkout] No payment_collection found even after re-fetch");
+          throw new Error(
+            "Zahlungsabwicklung nicht verfügbar. Bitte kontaktieren Sie uns direkt."
+          );
         }
       } else {
         console.warn("[Checkout] No shipping options found – trying complete anyway");
