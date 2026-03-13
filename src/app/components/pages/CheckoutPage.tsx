@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import {
   ArrowLeft,
-  CreditCard,
   Truck,
   Store,
   Banknote,
@@ -11,12 +10,23 @@ import {
   Lock,
   ChevronDown,
   ChevronUp,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { useCart } from "../CartContext";
 import { SEOHead } from "../SEOHead";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
+import { IS_BACKEND_ENABLED } from "../api/config";
+import {
+  updateCart,
+  addShippingMethod,
+  fetchShippingOptions,
+  initPaymentSession,
+  completeCart,
+  type MedusaAddress,
+} from "../api/medusa-client";
 
-type PaymentMethod = "paypal" | "vorkasse" | "barzahlung";
+type PaymentMethod = "vorkasse" | "barzahlung";
 
 interface FormData {
   firstName: string;
@@ -37,14 +47,8 @@ const paymentMethods: {
   id: PaymentMethod;
   label: string;
   desc: string;
-  icon: typeof CreditCard;
+  icon: typeof Banknote;
 }[] = [
-  {
-    id: "paypal",
-    label: "PayPal",
-    desc: "Sicher bezahlen mit PayPal",
-    icon: CreditCard,
-  },
   {
     id: "vorkasse",
     label: "Vorkasse (Überweisung)",
@@ -59,13 +63,17 @@ const paymentMethods: {
   },
 ];
 
+// Checkout step indicator
+type CheckoutStep = "form" | "processing" | "error";
+
 export function CheckoutPage() {
-  const { items, totalPrice, clearCart } = useCart();
+  const { items, totalPrice, clearCart, medusaCartId, syncing, ensureMedusaCart } = useCart();
   const navigate = useNavigate();
-  const [payment, setPayment] = useState<PaymentMethod>("paypal");
+  const [payment, setPayment] = useState<PaymentMethod>("vorkasse");
   const [showSummary, setShowSummary] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
-  const [submitting, setSubmitting] = useState(false);
+  const [step, setStep] = useState<CheckoutStep>("form");
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [form, setForm] = useState<FormData>({
     firstName: "",
     lastName: "",
@@ -104,12 +112,136 @@ export function CheckoutPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
-    setSubmitting(true);
+  // -----------------------------------------------------------------------
+  // MEDUSA CHECKOUT FLOW
+  // -----------------------------------------------------------------------
 
-    // Simulate order processing
+  const handleMedusaCheckout = async (cartId: string) => {
+    try {
+      setStep("processing");
+      setCheckoutError(null);
+
+      // 1. Update cart with email + addresses
+      console.log("[Checkout] Step 1: Updating cart with customer info...");
+      const shippingAddress: MedusaAddress = {
+        first_name: form.firstName,
+        last_name: form.lastName,
+        address_1: isPickup ? "Abholung – Die Werkstatt" : form.street,
+        city: isPickup ? "Innsbruck" : form.city,
+        postal_code: isPickup ? "6020" : form.zip,
+        country_code: form.country.toLowerCase(),
+        phone: form.phone || undefined,
+      };
+
+      const cartUpdate = await updateCart(cartId, {
+        email: form.email,
+        shipping_address: shippingAddress,
+        billing_address: shippingAddress,
+      });
+
+      if (!cartUpdate) {
+        throw new Error("Kundendaten konnten nicht gespeichert werden.");
+      }
+
+      // 2. Fetch shipping options and select one
+      console.log("[Checkout] Step 2: Fetching shipping options...");
+      const shippingOptions = await fetchShippingOptions(cartId);
+      console.log("[Checkout] Shipping options:", shippingOptions);
+
+      if (shippingOptions && shippingOptions.length > 0) {
+        // Try to find the right shipping option
+        let selectedOption = shippingOptions[0]; // fallback to first
+
+        if (isPickup) {
+          // Look for pickup/Abholung option
+          const pickup = shippingOptions.find(
+            (o) =>
+              o.name.toLowerCase().includes("abhol") ||
+              o.name.toLowerCase().includes("pickup") ||
+              o.amount === 0
+          );
+          if (pickup) selectedOption = pickup;
+        } else {
+          // Look for delivery option
+          const delivery = shippingOptions.find(
+            (o) =>
+              o.name.toLowerCase().includes("versand") ||
+              o.name.toLowerCase().includes("shipping") ||
+              o.name.toLowerCase().includes("flatrate") ||
+              o.name.toLowerCase().includes("standard")
+          );
+          if (delivery) selectedOption = delivery;
+        }
+
+        console.log("[Checkout] Selected shipping:", selectedOption.name, selectedOption.id);
+        const cartWithShipping = await addShippingMethod(cartId, selectedOption.id);
+
+        if (!cartWithShipping) {
+          throw new Error("Versandart konnte nicht ausgewählt werden.");
+        }
+
+        // 3. Initialize payment session
+        // In Medusa v2, the cart gets a payment_collection after shipping is set
+        console.log("[Checkout] Step 3: Initializing payment...");
+        const paymentCollectionId = (cartWithShipping as any).payment_collection?.id;
+
+        if (paymentCollectionId) {
+          const paymentSession = await initPaymentSession(
+            paymentCollectionId,
+            "pp_system_default",
+            {
+              payment_method: payment,
+              notes: form.notes || undefined,
+            }
+          );
+          console.log("[Checkout] Payment session:", paymentSession);
+        } else {
+          console.warn("[Checkout] No payment_collection on cart – trying complete anyway");
+        }
+      } else {
+        console.warn("[Checkout] No shipping options found – trying complete anyway");
+      }
+
+      // 4. Complete the cart → creates order
+      console.log("[Checkout] Step 4: Completing cart...");
+      const order = await completeCart(cartId);
+
+      if (order) {
+        console.log("[Checkout] Order created:", order);
+        clearCart();
+        navigate("/bestellung-bestaetigt", {
+          state: {
+            orderNumber: `TGO-${order.display_id || order.id.slice(-8).toUpperCase()}`,
+            orderId: order.id,
+            displayId: order.display_id,
+            payment,
+            total: (order.total || grandTotal * 100) / 100,
+            email: form.email,
+            isPickup,
+            firstName: form.firstName,
+            fromMedusa: true,
+          },
+        });
+      } else {
+        throw new Error(
+          "Die Bestellung konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut."
+        );
+      }
+    } catch (err: any) {
+      console.error("[Checkout] Error:", err);
+      setStep("error");
+      setCheckoutError(
+        err?.message || "Es ist ein Fehler bei der Bestellung aufgetreten."
+      );
+    }
+  };
+
+  // -----------------------------------------------------------------------
+  // FALLBACK: Local-only checkout (when backend unavailable)
+  // -----------------------------------------------------------------------
+
+  const handleLocalCheckout = () => {
+    setStep("processing");
     setTimeout(() => {
       clearCart();
       navigate("/bestellung-bestaetigt", {
@@ -119,12 +251,37 @@ export function CheckoutPage() {
           total: grandTotal,
           email: form.email,
           isPickup,
+          firstName: form.firstName,
+          fromMedusa: false,
         },
       });
     }, 1500);
   };
 
-  if (items.length === 0) {
+  // -----------------------------------------------------------------------
+  // SUBMIT
+  // -----------------------------------------------------------------------
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+
+    if (IS_BACKEND_ENABLED) {
+      // Ensure Medusa cart exists and is synced
+      const cartId = medusaCartId || (await ensureMedusaCart());
+      if (cartId) {
+        await handleMedusaCheckout(cartId);
+      } else {
+        // Backend enabled but cart creation failed – fallback
+        console.warn("[Checkout] No Medusa cart available, using local fallback");
+        handleLocalCheckout();
+      }
+    } else {
+      handleLocalCheckout();
+    }
+  };
+
+  if (items.length === 0 && step !== "processing") {
     return (
       <div className="min-h-[60vh] flex items-center justify-center bg-cream">
         <SEOHead title="Kasse" canonical="/checkout" />
@@ -170,6 +327,37 @@ export function CheckoutPage() {
           Kasse
         </h1>
 
+        {/* Error banner */}
+        {checkoutError && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-start gap-3"
+          >
+            <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm text-red-800">{checkoutError}</p>
+              <button
+                onClick={() => {
+                  setStep("form");
+                  setCheckoutError(null);
+                }}
+                className="text-sm text-red-600 underline hover:text-red-800 mt-1"
+              >
+                Nochmal versuchen
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Syncing indicator */}
+        {syncing && (
+          <div className="bg-olive-50 border border-olive-200 rounded-lg px-4 py-2 mb-4 flex items-center gap-2 text-sm text-olive-700">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Warenkorb wird synchronisiert...
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Left: Form */}
@@ -191,7 +379,8 @@ export function CheckoutPage() {
                       type="text"
                       value={form.firstName}
                       onChange={(e) => updateField("firstName", e.target.value)}
-                      className={`w-full px-4 py-3 rounded-lg border bg-cream text-sm focus:outline-none focus:ring-2 focus:ring-olive-500/30 focus:border-olive-500 transition-colors ${
+                      disabled={step === "processing"}
+                      className={`w-full px-4 py-3 rounded-lg border bg-cream text-sm focus:outline-none focus:ring-2 focus:ring-olive-500/30 focus:border-olive-500 transition-colors disabled:opacity-50 ${
                         errors.firstName ? "border-destructive" : "border-border"
                       }`}
                       placeholder="Maria"
@@ -208,7 +397,8 @@ export function CheckoutPage() {
                       type="text"
                       value={form.lastName}
                       onChange={(e) => updateField("lastName", e.target.value)}
-                      className={`w-full px-4 py-3 rounded-lg border bg-cream text-sm focus:outline-none focus:ring-2 focus:ring-olive-500/30 focus:border-olive-500 transition-colors ${
+                      disabled={step === "processing"}
+                      className={`w-full px-4 py-3 rounded-lg border bg-cream text-sm focus:outline-none focus:ring-2 focus:ring-olive-500/30 focus:border-olive-500 transition-colors disabled:opacity-50 ${
                         errors.lastName ? "border-destructive" : "border-border"
                       }`}
                       placeholder="Muster"
@@ -225,7 +415,8 @@ export function CheckoutPage() {
                       type="email"
                       value={form.email}
                       onChange={(e) => updateField("email", e.target.value)}
-                      className={`w-full px-4 py-3 rounded-lg border bg-cream text-sm focus:outline-none focus:ring-2 focus:ring-olive-500/30 focus:border-olive-500 transition-colors ${
+                      disabled={step === "processing"}
+                      className={`w-full px-4 py-3 rounded-lg border bg-cream text-sm focus:outline-none focus:ring-2 focus:ring-olive-500/30 focus:border-olive-500 transition-colors disabled:opacity-50 ${
                         errors.email ? "border-destructive" : "border-border"
                       }`}
                       placeholder="maria@beispiel.at"
@@ -242,7 +433,8 @@ export function CheckoutPage() {
                       type="tel"
                       value={form.phone}
                       onChange={(e) => updateField("phone", e.target.value)}
-                      className="w-full px-4 py-3 rounded-lg border border-border bg-cream text-sm focus:outline-none focus:ring-2 focus:ring-olive-500/30 focus:border-olive-500 transition-colors"
+                      disabled={step === "processing"}
+                      className="w-full px-4 py-3 rounded-lg border border-border bg-cream text-sm focus:outline-none focus:ring-2 focus:ring-olive-500/30 focus:border-olive-500 transition-colors disabled:opacity-50"
                       placeholder="+43 664 ..."
                     />
                   </div>
@@ -267,6 +459,8 @@ export function CheckoutPage() {
                           <strong>Die Werkstatt – Direktverkauf Innsbruck</strong>
                         </p>
                         <p className="text-sm text-muted-foreground mt-1">
+                          Baeckerbuehelgasse 14, 6020 Innsbruck
+                          <br />
                           Bitte rufen Sie uns vorher unter{" "}
                           <a
                             href="tel:+4366455555577"
@@ -289,7 +483,8 @@ export function CheckoutPage() {
                         type="text"
                         value={form.street}
                         onChange={(e) => updateField("street", e.target.value)}
-                        className={`w-full px-4 py-3 rounded-lg border bg-cream text-sm focus:outline-none focus:ring-2 focus:ring-olive-500/30 focus:border-olive-500 transition-colors ${
+                        disabled={step === "processing"}
+                        className={`w-full px-4 py-3 rounded-lg border bg-cream text-sm focus:outline-none focus:ring-2 focus:ring-olive-500/30 focus:border-olive-500 transition-colors disabled:opacity-50 ${
                           errors.street ? "border-destructive" : "border-border"
                         }`}
                         placeholder="Musterstraße 1"
@@ -307,7 +502,8 @@ export function CheckoutPage() {
                           type="text"
                           value={form.zip}
                           onChange={(e) => updateField("zip", e.target.value)}
-                          className={`w-full px-4 py-3 rounded-lg border bg-cream text-sm focus:outline-none focus:ring-2 focus:ring-olive-500/30 focus:border-olive-500 transition-colors ${
+                          disabled={step === "processing"}
+                          className={`w-full px-4 py-3 rounded-lg border bg-cream text-sm focus:outline-none focus:ring-2 focus:ring-olive-500/30 focus:border-olive-500 transition-colors disabled:opacity-50 ${
                             errors.zip ? "border-destructive" : "border-border"
                           }`}
                           placeholder="6020"
@@ -324,7 +520,8 @@ export function CheckoutPage() {
                           type="text"
                           value={form.city}
                           onChange={(e) => updateField("city", e.target.value)}
-                          className={`w-full px-4 py-3 rounded-lg border bg-cream text-sm focus:outline-none focus:ring-2 focus:ring-olive-500/30 focus:border-olive-500 transition-colors ${
+                          disabled={step === "processing"}
+                          className={`w-full px-4 py-3 rounded-lg border bg-cream text-sm focus:outline-none focus:ring-2 focus:ring-olive-500/30 focus:border-olive-500 transition-colors disabled:opacity-50 ${
                             errors.city ? "border-destructive" : "border-border"
                           }`}
                           placeholder="Innsbruck"
@@ -341,7 +538,8 @@ export function CheckoutPage() {
                       <select
                         value={form.country}
                         onChange={(e) => updateField("country", e.target.value)}
-                        className="w-full px-4 py-3 rounded-lg border border-border bg-cream text-sm focus:outline-none focus:ring-2 focus:ring-olive-500/30 focus:border-olive-500 transition-colors"
+                        disabled={step === "processing"}
+                        className="w-full px-4 py-3 rounded-lg border border-border bg-cream text-sm focus:outline-none focus:ring-2 focus:ring-olive-500/30 focus:border-olive-500 transition-colors disabled:opacity-50"
                       >
                         <option value="AT">Österreich</option>
                         <option value="DE">Deutschland</option>
@@ -372,7 +570,7 @@ export function CheckoutPage() {
                           isActive
                             ? "border-olive-500 bg-olive-50"
                             : "border-border hover:border-olive-300"
-                        }`}
+                        } ${step === "processing" ? "opacity-50 pointer-events-none" : ""}`}
                       >
                         <input
                           type="radio"
@@ -380,6 +578,7 @@ export function CheckoutPage() {
                           value={pm.id}
                           checked={isActive}
                           onChange={() => setPayment(pm.id)}
+                          disabled={step === "processing"}
                           className="sr-only"
                         />
                         <div
@@ -443,8 +642,9 @@ export function CheckoutPage() {
                 <textarea
                   value={form.notes}
                   onChange={(e) => updateField("notes", e.target.value)}
+                  disabled={step === "processing"}
                   rows={3}
-                  className="w-full px-4 py-3 rounded-lg border border-border bg-cream text-sm focus:outline-none focus:ring-2 focus:ring-olive-500/30 focus:border-olive-500 transition-colors resize-none"
+                  className="w-full px-4 py-3 rounded-lg border border-border bg-cream text-sm focus:outline-none focus:ring-2 focus:ring-olive-500/30 focus:border-olive-500 transition-colors resize-none disabled:opacity-50"
                   placeholder="Lieferhinweise, Geschenkverpackung, etc."
                 />
               </section>
@@ -572,21 +772,22 @@ export function CheckoutPage() {
                 <div className="p-5 border-t border-border">
                   <button
                     type="submit"
-                    disabled={submitting}
+                    disabled={step === "processing" || syncing}
                     className="w-full bg-olive-500 text-white py-3.5 rounded-lg hover:bg-olive-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    {submitting ? (
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                        className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
-                      />
+                    {step === "processing" ? (
+                      <>
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                          className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
+                        />
+                        <span>Bestellung wird verarbeitet...</span>
+                      </>
                     ) : (
                       <>
                         <Lock className="w-4 h-4" />
-                        {payment === "paypal"
-                          ? "Mit PayPal bezahlen"
-                          : payment === "vorkasse"
+                        {payment === "vorkasse"
                           ? "Zahlungspflichtig bestellen"
                           : "Bestellung abschließen"}
                       </>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:v="urn:schemas-microsoft-com:vml">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <title>Bestellbestätigung – The Girardi Oil</title>
+  <!--[if mso]>
+  <noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
+  <![endif]-->
+  <style>
+    /* Reset */
+    body, table, td, p, a, li { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+    body { margin: 0; padding: 0; width: 100% !important; background-color: #FAF8F3; }
+    
+    /* Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+    
+    .heading { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; }
+    .body-text { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    
+    /* Responsive */
+    @media only screen and (max-width: 600px) {
+      .container { width: 100% !important; padding: 0 16px !important; }
+      .content { padding: 24px 20px !important; }
+      .product-img { width: 50px !important; height: 50px !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #FAF8F3;">
+  <!-- Preheader (hidden text for email clients) -->
+  <div style="display: none; max-height: 0; overflow: hidden;">
+    Vielen Dank für Ihre Bestellung bei The Girardi Oil! Bestellnummer: {{order_number}}
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #FAF8F3;">
+    <tr>
+      <td align="center" style="padding: 40px 16px;">
+        <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+          
+          <!-- Logo / Header -->
+          <tr>
+            <td align="center" style="padding-bottom: 32px;">
+              <table role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="padding: 12px 24px; background-color: #275425; border-radius: 8px;">
+                    <span class="heading" style="color: #C5A572; font-size: 20px; font-weight: 700; letter-spacing: 1px;">
+                      THE GIRARDI OIL
+                    </span>
+                  </td>
+                </tr>
+              </table>
+              <p class="body-text" style="color: #8B8680; font-size: 12px; margin: 8px 0 0; letter-spacing: 2px; text-transform: uppercase;">
+                1000 Horia &middot; Griechisches Olivenöl
+              </p>
+            </td>
+          </tr>
+
+          <!-- Main Card -->
+          <tr>
+            <td>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+                
+                <!-- Success Banner -->
+                <tr>
+                  <td style="background-color: #275425; padding: 32px 40px; text-align: center;" class="content">
+                    <div style="width: 56px; height: 56px; background-color: rgba(255,255,255,0.15); border-radius: 50%; display: inline-block; line-height: 56px; margin-bottom: 16px;">
+                      <span style="color: #FFFFFF; font-size: 28px;">&#10003;</span>
+                    </div>
+                    <h1 class="heading" style="color: #FFFFFF; font-size: 26px; margin: 0 0 8px; font-weight: 600;">
+                      Vielen Dank, {{first_name}}!
+                    </h1>
+                    <p class="body-text" style="color: rgba(255,255,255,0.85); font-size: 15px; margin: 0;">
+                      Ihre Bestellung wurde erfolgreich aufgenommen.
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- Order Info -->
+                <tr>
+                  <td style="padding: 32px 40px;" class="content">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #FAF8F3; border-radius: 12px; padding: 20px;">
+                      <tr>
+                        <td style="padding: 20px;">
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td class="body-text" style="font-size: 13px; color: #8B8680; padding-bottom: 8px;">Bestellnummer</td>
+                              <td class="heading" style="font-size: 14px; color: #1a1a1a; text-align: right; padding-bottom: 8px; font-weight: 600;">{{order_number}}</td>
+                            </tr>
+                            <tr>
+                              <td class="body-text" style="font-size: 13px; color: #8B8680; padding-bottom: 8px;">Bestelldatum</td>
+                              <td class="body-text" style="font-size: 14px; color: #1a1a1a; text-align: right; padding-bottom: 8px;">{{order_date}}</td>
+                            </tr>
+                            <tr>
+                              <td class="body-text" style="font-size: 13px; color: #8B8680;">Zahlungsart</td>
+                              <td class="body-text" style="font-size: 14px; color: #1a1a1a; text-align: right;">{{payment_method}}</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Products -->
+                <tr>
+                  <td style="padding: 0 40px 24px;" class="content">
+                    <h2 class="heading" style="font-size: 18px; color: #1a1a1a; margin: 0 0 16px; font-weight: 600;">
+                      Ihre Produkte
+                    </h2>
+                    
+                    <!-- REPEAT: product_items -->
+                    {{#each items}}
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 12px;">
+                      <tr>
+                        <td style="width: 64px; vertical-align: top;">
+                          <img src="{{this.thumbnail}}" alt="{{this.title}}" class="product-img" width="60" height="60" style="border-radius: 8px; object-fit: cover; background-color: #FAF8F3;" />
+                        </td>
+                        <td style="padding-left: 12px; vertical-align: top;">
+                          <p class="body-text" style="margin: 0; font-size: 14px; color: #1a1a1a; font-weight: 500;">{{this.title}}</p>
+                          <p class="body-text" style="margin: 2px 0 0; font-size: 13px; color: #8B8680;">Menge: {{this.quantity}}</p>
+                        </td>
+                        <td style="vertical-align: top; text-align: right; white-space: nowrap;">
+                          <p class="heading" style="margin: 0; font-size: 14px; color: #275425; font-weight: 600;">{{this.total}} &euro;</p>
+                        </td>
+                      </tr>
+                    </table>
+                    {{/each}}
+                    <!-- END REPEAT -->
+
+                    <!-- Totals -->
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top: 1px solid #E8E5E0; margin-top: 16px; padding-top: 16px;">
+                      <tr>
+                        <td class="body-text" style="font-size: 14px; color: #8B8680; padding-top: 16px;">Zwischensumme</td>
+                        <td class="body-text" style="font-size: 14px; color: #1a1a1a; text-align: right; padding-top: 16px;">{{subtotal}} &euro;</td>
+                      </tr>
+                      <tr>
+                        <td class="body-text" style="font-size: 14px; color: #8B8680; padding-top: 6px;">Versand</td>
+                        <td class="body-text" style="font-size: 14px; color: {{shipping_color}}; text-align: right; padding-top: 6px;">{{shipping_display}}</td>
+                      </tr>
+                      <tr>
+                        <td class="body-text" style="font-size: 14px; color: #8B8680; padding-top: 6px;">inkl. MwSt.</td>
+                        <td class="body-text" style="font-size: 14px; color: #1a1a1a; text-align: right; padding-top: 6px;">{{tax_total}} &euro;</td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" style="padding-top: 12px;">
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top: 2px solid #275425;">
+                            <tr>
+                              <td class="heading" style="font-size: 18px; color: #1a1a1a; padding-top: 12px; font-weight: 600;">Gesamt</td>
+                              <td class="heading" style="font-size: 18px; color: #275425; text-align: right; padding-top: 12px; font-weight: 700;">{{total}} &euro;</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Vorkasse Bank Info (conditional) -->
+                {{#if is_vorkasse}}
+                <tr>
+                  <td style="padding: 0 40px 24px;" class="content">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #FFF9EE; border: 1px solid #E8D5B0; border-radius: 12px;">
+                      <tr>
+                        <td style="padding: 20px;">
+                          <p class="body-text" style="margin: 0 0 8px; font-size: 14px; color: #1a1a1a; font-weight: 600;">
+                            Bankverbindung für Ihre Überweisung:
+                          </p>
+                          <p class="body-text" style="margin: 0; font-size: 14px; color: #5A5550; line-height: 1.6;">
+                            Monika Girardi & Mitgesellschafter<br>
+                            IBAN: AT00 0000 0000 0000 0000<br>
+                            BIC: XXXXATAXX<br>
+                            <strong>Verwendungszweck: {{order_number}}</strong>
+                          </p>
+                          <p class="body-text" style="margin: 12px 0 0; font-size: 13px; color: #8B8680;">
+                            Wir versenden Ihre Bestellung nach Zahlungseingang (2–3 Werktage).
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                {{/if}}
+
+                <!-- Pickup Info (conditional) -->
+                {{#if is_pickup}}
+                <tr>
+                  <td style="padding: 0 40px 24px;" class="content">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #F0F5EF; border: 1px solid #C0D4BE; border-radius: 12px;">
+                      <tr>
+                        <td style="padding: 20px;">
+                          <p class="body-text" style="margin: 0 0 8px; font-size: 14px; color: #1a1a1a; font-weight: 600;">
+                            Abholung in unserer Werkstatt
+                          </p>
+                          <p class="body-text" style="margin: 0; font-size: 14px; color: #5A5550; line-height: 1.6;">
+                            Baeckerbuehelgasse 14<br>
+                            6020 Innsbruck, Österreich
+                          </p>
+                          <p class="body-text" style="margin: 12px 0 0; font-size: 13px; color: #8B8680;">
+                            Bitte kontaktieren Sie uns unter +43 664 55555 77, um einen Abholtermin zu vereinbaren.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                {{/if}}
+
+                <!-- Shipping Address (if not pickup) -->
+                {{#unless is_pickup}}
+                <tr>
+                  <td style="padding: 0 40px 32px;" class="content">
+                    <h2 class="heading" style="font-size: 16px; color: #1a1a1a; margin: 0 0 12px; font-weight: 600;">
+                      Lieferadresse
+                    </h2>
+                    <p class="body-text" style="margin: 0; font-size: 14px; color: #5A5550; line-height: 1.6;">
+                      {{first_name}} {{last_name}}<br>
+                      {{address_1}}<br>
+                      {{postal_code}} {{city}}<br>
+                      {{country}}
+                    </p>
+                  </td>
+                </tr>
+                {{/unless}}
+
+                <!-- CTA -->
+                <tr>
+                  <td style="padding: 0 40px 32px; text-align: center;" class="content">
+                    <a href="https://giradi.vercel.app/shop" style="display: inline-block; background-color: #275425; color: #FFFFFF; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 500;" class="body-text">
+                      Weiter einkaufen &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 32px 16px; text-align: center;">
+              <p class="body-text" style="font-size: 13px; color: #8B8680; margin: 0 0 4px;">
+                The Girardi Oil &middot; 1000 Horia
+              </p>
+              <p class="body-text" style="font-size: 12px; color: #B0ADA8; margin: 0 0 4px;">
+                Baeckerbuehelgasse 14, 6020 Innsbruck, Österreich
+              </p>
+              <p class="body-text" style="font-size: 12px; color: #B0ADA8; margin: 0 0 16px;">
+                <a href="mailto:office@1000horia.at" style="color: #275425; text-decoration: none;">office@1000horia.at</a>
+                &middot;
+                <a href="tel:+4366455555577" style="color: #275425; text-decoration: none;">+43 664 55555 77</a>
+              </p>
+              <p class="body-text" style="font-size: 11px; color: #C0BDB8; margin: 0;">
+                <a href="https://giradi.vercel.app/impressum" style="color: #B0ADA8; text-decoration: none;">Impressum</a>
+                &middot;
+                <a href="https://giradi.vercel.app/datenschutz" style="color: #B0ADA8; text-decoration: none;">Datenschutz</a>
+                &middot;
+                <a href="https://giradi.vercel.app/agb" style="color: #B0ADA8; text-decoration: none;">AGB</a>
+                &middot;
+                <a href="https://giradi.vercel.app/widerruf" style="color: #B0ADA8; text-decoration: none;">Widerruf</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

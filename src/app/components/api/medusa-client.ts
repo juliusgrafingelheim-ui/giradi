@@ -340,13 +340,20 @@ export async function selectPaymentSession(
 export async function completeCart(
   cartId: string
 ): Promise<MedusaOrder | null> {
-  const data = await medusaFetch<{ type: string; data: MedusaOrder }>(
-    `/carts/${cartId}/complete`,
-    { method: "POST" }
-  );
-  if (data?.type === "order") {
+  const data = await medusaFetch<{
+    type: string;
+    data: MedusaOrder;
+    order: MedusaOrder;
+  }>(`/carts/${cartId}/complete`, { method: "POST" });
+
+  if (data?.type === "order" && data.data) {
     clearStoredCartId();
     return data.data;
+  }
+  // Medusa v2 may return { order: ... } directly
+  if (data?.order) {
+    clearStoredCartId();
+    return data.order;
   }
   return null;
 }
@@ -370,9 +377,38 @@ export async function fetchRegions(): Promise<MedusaRegion[] | null> {
 /** Get shipping options for a cart */
 export async function fetchShippingOptions(
   cartId: string
-): Promise<{ id: string; name: string; amount: number }[] | null> {
+): Promise<{ id: string; name: string; amount: number; data?: Record<string, unknown> }[] | null> {
   const data = await medusaFetch<{
-    shipping_options: { id: string; name: string; amount: number }[];
-  }>(`/shipping-options/${cartId}`);
+    shipping_options: { id: string; name: string; amount: number; data?: Record<string, unknown> }[];
+  }>(`/shipping-options?cart_id=${cartId}`);
   return data?.shipping_options || null;
+}
+
+// ---------------------------------------------------------------------------
+// PAYMENT (Medusa v2 – Payment Collections)
+// ---------------------------------------------------------------------------
+
+/**
+ * Initialize a payment session on the cart's payment collection.
+ * In Medusa v2, after adding a shipping method the cart gets a payment_collection.
+ * We create a payment session with the given provider (e.g. "pp_system_default").
+ */
+export async function initPaymentSession(
+  paymentCollectionId: string,
+  providerId: string = "pp_system_default",
+  context?: Record<string, unknown>
+): Promise<{ id: string; provider_id: string; status: string } | null> {
+  const data = await medusaFetch<{
+    payment_collection: {
+      payment_sessions: { id: string; provider_id: string; status: string }[];
+    };
+  }>(`/payment-collections/${paymentCollectionId}/payment-sessions`, {
+    method: "POST",
+    body: JSON.stringify({
+      provider_id: providerId,
+      ...(context ? { context } : {}),
+    }),
+  });
+  const sessions = data?.payment_collection?.payment_sessions;
+  return sessions?.find((s) => s.provider_id === providerId) || sessions?.[0] || null;
 }

@@ -1,23 +1,29 @@
 import { Link, useLocation } from "react-router";
 import { motion } from "motion/react";
-import { CheckCircle, Mail, ArrowRight, Store, Banknote, CreditCard } from "lucide-react";
+import { CheckCircle, Mail, ArrowRight, Store, Banknote, Package } from "lucide-react";
 import { SEOHead } from "../SEOHead";
 
 export function OrderConfirmationPage() {
   const location = useLocation();
   const state = location.state as {
     orderNumber?: string;
+    orderId?: string;
+    displayId?: number;
     payment?: string;
     total?: number;
     email?: string;
     isPickup?: boolean;
+    firstName?: string;
+    fromMedusa?: boolean;
   } | null;
 
   const orderNumber = state?.orderNumber || "TGO-DEMO";
-  const payment = state?.payment || "paypal";
+  const payment = state?.payment || "vorkasse";
   const total = state?.total || 0;
   const email = state?.email || "ihre@email.at";
   const isPickup = state?.isPickup || false;
+  const firstName = state?.firstName || "";
+  const fromMedusa = state?.fromMedusa || false;
 
   return (
     <div className="bg-cream min-h-[70vh] flex items-center">
@@ -44,10 +50,14 @@ export function OrderConfirmationPage() {
             className="text-2xl sm:text-3xl mb-2"
             style={{ fontFamily: "var(--font-heading)" }}
           >
-            Vielen Dank für Ihre Bestellung!
+            {firstName
+              ? `Vielen Dank, ${firstName}!`
+              : "Vielen Dank für Ihre Bestellung!"}
           </h1>
           <p className="text-muted-foreground mb-8">
-            Ihre Bestellung wurde erfolgreich aufgenommen.
+            {fromMedusa
+              ? "Ihre Bestellung wurde erfolgreich aufgenommen und wird bearbeitet."
+              : "Ihre Bestellung wurde erfolgreich aufgenommen."}
           </p>
 
           {/* Order details */}
@@ -69,18 +79,28 @@ export function OrderConfirmationPage() {
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Zahlungsart</span>
               <div className="flex items-center gap-1.5">
-                {payment === "paypal" && <CreditCard className="w-4 h-4 text-olive-500" />}
                 {payment === "vorkasse" && <Banknote className="w-4 h-4 text-olive-500" />}
                 {payment === "barzahlung" && <Store className="w-4 h-4 text-olive-500" />}
                 <span className="text-sm">
-                  {payment === "paypal"
-                    ? "PayPal"
-                    : payment === "vorkasse"
-                    ? "Vorkasse"
+                  {payment === "vorkasse"
+                    ? "Vorkasse (Überweisung)"
                     : "Barzahlung bei Abholung"}
                 </span>
               </div>
             </div>
+            {fromMedusa && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Status</span>
+                <div className="flex items-center gap-1.5">
+                  <Package className="w-4 h-4 text-olive-500" />
+                  <span className="text-sm">
+                    {payment === "vorkasse"
+                      ? "Warte auf Zahlungseingang"
+                      : "Wird vorbereitet"}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Payment-specific info */}
@@ -102,7 +122,7 @@ export function OrderConfirmationPage() {
                     Verwendungszweck: {orderNumber}
                   </p>
                   <p className="text-xs text-muted-foreground mt-2">
-                    Wir versenden Ihre Bestellung nach Zahlungseingang.
+                    Wir versenden Ihre Bestellung nach Zahlungseingang (2–3 Werktage).
                   </p>
                 </div>
               </div>
@@ -118,6 +138,8 @@ export function OrderConfirmationPage() {
                     <strong>Abholung in unserer Werkstatt</strong>
                   </p>
                   <p className="text-sm text-muted-foreground mt-1.5">
+                    Baeckerbuehelgasse 14, 6020 Innsbruck
+                    <br />
                     Bitte kontaktieren Sie uns unter{" "}
                     <a href="tel:+4366455555577" className="text-olive-500 hover:underline">
                       +43 664 55555 77
