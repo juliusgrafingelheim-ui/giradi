@@ -151,12 +151,13 @@ function medusaToProduct(medusa: MedusaProduct): Product {
   const meta = medusa.metadata || {};
 
   // Price: Medusa v2 stores amount in smallest currency unit (cents for EUR)
+  // After admin fix: the API now returns amounts in Euro (e.g. 22.50), not cents.
   const variant = medusa.variants?.[0];
   let price = 0;
   let priceFromMedusa = false;
   if (variant) {
     if (variant.calculated_price?.calculated_amount != null) {
-      const p = variant.calculated_price.calculated_amount / 100;
+      const p = variant.calculated_price.calculated_amount;
       if (p > 0) {
         price = p;
         priceFromMedusa = true;
@@ -164,13 +165,13 @@ function medusaToProduct(medusa: MedusaProduct): Product {
     } else if (variant.prices?.length) {
       const eurPrice = variant.prices.find((p) => p.currency_code === "eur");
       const raw = eurPrice?.amount ?? variant.prices[0]?.amount ?? 0;
-      const p = raw / 100;
+      const p = raw;
       if (p > 0) {
         price = p;
         priceFromMedusa = true;
       }
     } else if ((variant as any).price != null) {
-      const p = (variant as any).price / 100;
+      const p = (variant as any).price;
       if (p > 0) {
         price = p;
         priceFromMedusa = true;

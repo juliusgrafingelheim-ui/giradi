@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router";
 import { Layout } from "./components/Layout";
+import { RootProvider } from "./components/RootProvider";
 import { HomePage } from "./components/pages/HomePage";
 import { ShopPage } from "./components/pages/ShopPage";
 import { ProductDetailPage } from "./components/pages/ProductDetailPage";
@@ -17,21 +18,26 @@ import { NotFoundPage } from "./components/pages/NotFoundPage";
 export const router = createBrowserRouter([
   {
     path: "/",
-    Component: Layout,
+    Component: RootProvider,
     children: [
-      { index: true, Component: HomePage },
-      { path: "shop", Component: ShopPage },
-      { path: "shop/:id", Component: ProductDetailPage },
-      { path: "unsere-geschichte", Component: AboutPage },
-      { path: "kontakt", Component: ContactPage },
-      { path: "checkout", Component: CheckoutPage },
-      { path: "bestellung-bestaetigt", Component: OrderConfirmationPage },
-      { path: "setup", Component: SetupGuidePage },
-      { path: "impressum", Component: ImpressumPage },
-      { path: "datenschutz", Component: DatenschutzPage },
-      { path: "agb", Component: AGBPage },
-      { path: "widerruf", Component: WiderrufPage },
-      { path: "*", Component: NotFoundPage },
+      {
+        Component: Layout,
+        children: [
+          { index: true, Component: HomePage },
+          { path: "shop", Component: ShopPage },
+          { path: "shop/:id", Component: ProductDetailPage },
+          { path: "unsere-geschichte", Component: AboutPage },
+          { path: "kontakt", Component: ContactPage },
+          { path: "checkout", Component: CheckoutPage },
+          { path: "bestellung-bestaetigt", Component: OrderConfirmationPage },
+          { path: "setup", Component: SetupGuidePage },
+          { path: "impressum", Component: ImpressumPage },
+          { path: "datenschutz", Component: DatenschutzPage },
+          { path: "agb", Component: AGBPage },
+          { path: "widerruf", Component: WiderrufPage },
+          { path: "*", Component: NotFoundPage },
+        ],
+      },
     ],
   },
 ]);

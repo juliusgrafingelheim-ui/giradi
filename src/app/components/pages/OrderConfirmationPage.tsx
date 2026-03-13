@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router";
 import { motion } from "motion/react";
-import { CheckCircle, Mail, ArrowRight, Store, Banknote, Package } from "lucide-react";
+import { CheckCircle, Mail, ArrowRight, Store, Banknote, Package, AlertTriangle } from "lucide-react";
 import { SEOHead } from "../SEOHead";
 
 export function OrderConfirmationPage() {
@@ -15,6 +15,7 @@ export function OrderConfirmationPage() {
     isPickup?: boolean;
     firstName?: string;
     fromMedusa?: boolean;
+    warning?: string;
   } | null;
 
   const orderNumber = state?.orderNumber || "TGO-DEMO";
@@ -24,6 +25,7 @@ export function OrderConfirmationPage() {
   const isPickup = state?.isPickup || false;
   const firstName = state?.firstName || "";
   const fromMedusa = state?.fromMedusa || false;
+  const warning = state?.warning;
 
   return (
     <div className="bg-cream min-h-[70vh] flex items-center">
@@ -59,6 +61,14 @@ export function OrderConfirmationPage() {
               ? "Ihre Bestellung wurde erfolgreich aufgenommen und wird bearbeitet."
               : "Ihre Bestellung wurde erfolgreich aufgenommen."}
           </p>
+
+          {/* Warning banner if order response was unclear */}
+          {warning && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-left mb-6 flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+              <p className="text-sm text-amber-800">{warning}</p>
+            </div>
+          )}
 
           {/* Order details */}
           <div className="bg-cream rounded-xl p-6 text-left space-y-4 mb-8">

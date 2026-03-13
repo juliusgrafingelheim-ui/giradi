@@ -496,21 +496,57 @@ export async function selectPaymentSession(
 export async function completeCart(
   cartId: string
 ): Promise<MedusaOrder | null> {
-  const data = await medusaFetch<{
-    type: string;
-    data: MedusaOrder;
-    order: MedusaOrder;
-  }>(`/carts/${cartId}/complete`, { method: "POST" });
+  if (!IS_BACKEND_ENABLED) return null;
 
-  if (data?.type === "order" && data.data) {
-    clearStoredCartId();
-    return data.data;
+  const url = `${STORE_API}/carts/${cartId}/complete`;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(MEDUSA_PUBLISHABLE_KEY
+      ? { "x-publishable-api-key": MEDUSA_PUBLISHABLE_KEY }
+      : {}),
+  };
+
+  const res = await fetch(url, { method: "POST", headers });
+  let json: any;
+  try {
+    json = await res.json();
+  } catch {
+    json = null;
   }
-  // Medusa v2 may return { order: ... } directly
-  if (data?.order) {
-    clearStoredCartId();
-    return data.order;
+
+  console.log(
+    "[Medusa] completeCart status:", res.status,
+    "raw:", JSON.stringify(json).slice(0, 2000)
+  );
+
+  // Success: 200 OK
+  if (res.ok && json) {
+    const order = json.order || json.data;
+    if (order?.id) {
+      clearStoredCartId();
+      return order as MedusaOrder;
+    }
   }
+
+  // 409 Conflict: cart was already completed (double-submit).
+  // The order exists — we can still treat this as success.
+  if (res.status === 409) {
+    console.warn(
+      "[Medusa] completeCart got 409 – cart already completed. Treating as success."
+    );
+    clearStoredCartId();
+    // Return a minimal order object so the checkout flow can proceed
+    return {
+      id: cartId,
+      display_id: 0,
+      status: "pending",
+      total: 0,
+      email: "",
+    } as MedusaOrder;
+  }
+
+  // Any other error
+  console.error("[Medusa] completeCart failed:", res.status, json);
   return null;
 }
 
