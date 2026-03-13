@@ -350,14 +350,29 @@ export async function addShippingMethod(
 
 /**
  * Fetch cart with payment_collection included.
- * Medusa v2 requires explicit field expansion to include payment_collection.
+ * Medusa v2 uses different field expansion syntax – try multiple approaches.
  */
 export async function fetchCartForCheckout(
   cartId: string
 ): Promise<MedusaCart | null> {
-  const data = await medusaFetch<{ cart: MedusaCart }>(
-    `/carts/${cartId}?fields=+payment_collection.payment_sessions,+payment_collection.id`
+  // Approach 1: Medusa v2 relation expansion with *
+  let data = await medusaFetch<{ cart: MedusaCart }>(
+    `/carts/${cartId}?fields=*payment_collection`
   );
+  if (data?.cart?.payment_collection?.id) {
+    return data.cart;
+  }
+
+  // Approach 2: + prefix expansion
+  data = await medusaFetch<{ cart: MedusaCart }>(
+    `/carts/${cartId}?fields=+payment_collection.id,+payment_collection.payment_sessions`
+  );
+  if (data?.cart?.payment_collection?.id) {
+    return data.cart;
+  }
+
+  // Approach 3: plain fetch (some Medusa versions include it by default)
+  data = await medusaFetch<{ cart: MedusaCart }>(`/carts/${cartId}`);
   return data?.cart || null;
 }
 

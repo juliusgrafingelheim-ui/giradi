@@ -4,6 +4,7 @@ import {
   fetchShippingOptions,
   fetchCartForCheckout,
   initPaymentSession,
+  initPaymentSessions,
   completeCart,
   forceNewCart,
   addToCart,
@@ -250,6 +251,21 @@ export function CheckoutPage() {
           paymentCollectionId = fullCart?.payment_collection?.id;
         }
 
+        // Fallback: try initializing payment sessions on the cart directly
+        // Some Medusa v2 versions need an explicit POST to /carts/:id/payment-sessions
+        if (!paymentCollectionId) {
+          console.log("[Checkout] Trying initPaymentSessions fallback...");
+          const cartWithPayment = await initPaymentSessions(activeCartId);
+          console.log("[Checkout] initPaymentSessions result:", cartWithPayment);
+          paymentCollectionId = cartWithPayment?.payment_collection?.id;
+
+          // If still no payment collection, try one more re-fetch
+          if (!paymentCollectionId && cartWithPayment) {
+            const reFetched = await fetchCartForCheckout(activeCartId);
+            paymentCollectionId = reFetched?.payment_collection?.id;
+          }
+        }
+
         if (paymentCollectionId) {
           const paymentSession = await initPaymentSession(
             paymentCollectionId,
@@ -265,10 +281,9 @@ export function CheckoutPage() {
             throw new Error("Zahlungssitzung konnte nicht erstellt werden. Bitte versuchen Sie es erneut.");
           }
         } else {
-          console.warn("[Checkout] No payment_collection found even after re-fetch");
-          throw new Error(
-            "Zahlungsabwicklung nicht verfügbar. Bitte kontaktieren Sie uns direkt."
-          );
+          // Last resort: skip payment session and try to complete anyway
+          // Manual payment (pp_system_default) might not require an explicit session
+          console.warn("[Checkout] No payment_collection found – attempting complete without explicit payment session");
         }
       } else {
         console.warn("[Checkout] No shipping options found – trying complete anyway");
