@@ -545,8 +545,31 @@ export async function fetchShippingOptions(
 // ---------------------------------------------------------------------------
 
 /**
+ * Create a payment collection for a cart.
+ * In Medusa v2.13+, payment collections are NOT auto-created when adding
+ * a shipping method. They must be explicitly created via this endpoint.
+ */
+export async function createPaymentCollection(
+  cartId: string
+): Promise<{ id: string } | null> {
+  const data = await medusaFetch<{
+    payment_collection: { id: string; payment_sessions?: unknown[] };
+  }>(`/payment-collections`, {
+    method: "POST",
+    body: JSON.stringify({ cart_id: cartId }),
+  });
+  if (data?.payment_collection?.id) {
+    console.log(
+      "[Medusa] Payment collection created:",
+      data.payment_collection.id
+    );
+    return data.payment_collection;
+  }
+  return null;
+}
+
+/**
  * Initialize a payment session on the cart's payment collection.
- * In Medusa v2, after adding a shipping method the cart gets a payment_collection.
  * We create a payment session with the given provider (e.g. "pp_system_default").
  */
 export async function initPaymentSession(

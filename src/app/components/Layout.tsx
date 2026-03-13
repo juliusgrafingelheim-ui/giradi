@@ -14,15 +14,7 @@ const navLinks = [
   { to: "/kontakt", label: "Kontakt" },
 ];
 
-export function Layout() {
-  return (
-    <CartProvider>
-      <LayoutInner />
-    </CartProvider>
-  );
-}
-
-function LayoutInner() {
+function LayoutContent() {
   const { totalItems, setIsOpen } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -284,5 +276,17 @@ function LayoutInner() {
 
       <CartDrawer />
     </div>
+  );
+}
+
+// Layout is the root route component. It wraps everything in CartProvider
+// so that all child routes (Shop, Checkout, etc.) have access to the cart.
+// This is necessary because createBrowserRouter + RouterProvider renders
+// route components in a separate React tree from App.tsx.
+export function Layout() {
+  return (
+    <CartProvider>
+      <LayoutContent />
+    </CartProvider>
   );
 }

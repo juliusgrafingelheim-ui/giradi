@@ -4,6 +4,7 @@ import {
   fetchShippingOptions,
   fetchCartForCheckout,
   fetchCartForCheckoutWithRetry,
+  createPaymentCollection,
   initPaymentSession,
   completeCart,
   forceNewCart,
@@ -248,19 +249,19 @@ export function CheckoutPage() {
         }
 
         // 3. Initialize payment session
-        // In Medusa v2, the addShippingMethod response may not include payment_collection.
-        // We need to re-fetch the cart with expanded fields to get it.
+        // In Medusa v2.13+, payment collections are NOT auto-created.
+        // We must explicitly create one via POST /store/payment-collections.
         console.log("[Checkout] Step 3: Initializing payment...");
 
-        // First check if it's already on the response
+        // Check if payment_collection already exists on the cart response
         let paymentCollectionId = (cartWithShipping as any).payment_collection?.id;
 
-        // If not, fetch the cart again with payment_collection fields
+        // If not on the response, explicitly create one (Medusa v2.13+ requirement)
         if (!paymentCollectionId) {
-          console.log("[Checkout] Re-fetching cart to get payment_collection...");
-          const fullCart = await fetchCartForCheckoutWithRetry(activeCartId);
-          console.log("[Checkout] Full cart payment_collection:", fullCart?.payment_collection);
-          paymentCollectionId = fullCart?.payment_collection?.id;
+          console.log("[Checkout] Creating payment collection for cart...");
+          const paymentCollection = await createPaymentCollection(activeCartId);
+          console.log("[Checkout] Payment collection result:", paymentCollection);
+          paymentCollectionId = paymentCollection?.id;
         }
 
         if (paymentCollectionId) {
