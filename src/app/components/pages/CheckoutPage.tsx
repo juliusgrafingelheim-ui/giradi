@@ -3,6 +3,7 @@ import {
   addShippingMethod,
   fetchShippingOptions,
   fetchCartForCheckout,
+  fetchCartForCheckoutWithRetry,
   initPaymentSession,
   completeCart,
   forceNewCart,
@@ -257,7 +258,7 @@ export function CheckoutPage() {
         // If not, fetch the cart again with payment_collection fields
         if (!paymentCollectionId) {
           console.log("[Checkout] Re-fetching cart to get payment_collection...");
-          const fullCart = await fetchCartForCheckout(activeCartId);
+          const fullCart = await fetchCartForCheckoutWithRetry(activeCartId);
           console.log("[Checkout] Full cart payment_collection:", fullCart?.payment_collection);
           paymentCollectionId = fullCart?.payment_collection?.id;
         }
@@ -277,12 +278,29 @@ export function CheckoutPage() {
             throw new Error("Zahlungssitzung konnte nicht erstellt werden. Bitte versuchen Sie es erneut.");
           }
         } else {
-          // Last resort: skip payment session and try to complete anyway
-          // Manual payment (pp_system_default) might not require an explicit session
-          console.warn("[Checkout] No payment_collection found – attempting complete without explicit payment session");
+          // payment_collection is REQUIRED for completeCart to succeed.
+          // If we can't find it, something is wrong with the backend config.
+          console.error(
+            "[Checkout] CRITICAL: No payment_collection found after retries.",
+            "Check backend: Region DACH must have pp_system_default linked as payment provider."
+          );
+          throw new Error(
+            "Zahlung konnte nicht initialisiert werden. " +
+            "Bitte kontaktiere uns unter info@girardi-oil.at – " +
+            "wir kümmern uns sofort darum."
+          );
         }
       } else {
-        console.warn("[Checkout] No shipping options found – trying complete anyway");
+        // No shipping options = backend misconfiguration
+        console.error(
+          "[Checkout] CRITICAL: No shipping options found for cart.",
+          "Check backend: Region DACH must have shipping options (Flatrate, Gratis ab 50€, Abholung) linked."
+        );
+        throw new Error(
+          "Keine Versandoptionen verfügbar. " +
+          "Bitte kontaktiere uns unter info@girardi-oil.at – " +
+          "wir kümmern uns sofort darum."
+        );
       }
 
       // 4. Complete the cart → creates order

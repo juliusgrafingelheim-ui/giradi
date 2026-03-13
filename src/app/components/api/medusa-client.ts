@@ -112,7 +112,8 @@ async function medusaFetch<T>(
         : {}),
     };
 
-    const res = await fetch(`${STORE_API}${path}`, {
+    const url = `${STORE_API}${path}`;
+    const res = await fetch(url, {
       ...options,
       headers: { ...headers, ...(options.headers as Record<string, string>) },
     });
@@ -130,7 +131,14 @@ async function medusaFetch<T>(
       return null;
     }
 
-    return (await res.json()) as T;
+    const json = await res.json();
+
+    // Debug: log raw response for POST requests
+    if (options.method === "POST" || options.method === "DELETE") {
+      console.log(`[Medusa] Raw response – ${path}:`, JSON.stringify(json).slice(0, 1500));
+    }
+
+    return json as T;
   } catch (err) {
     console.warn(`[Medusa] Network error – ${path}`, err);
     return null;
@@ -337,7 +345,29 @@ export async function updateCart(
     method: "POST",
     body: JSON.stringify(payload),
   });
-  return data?.cart || null;
+
+  const cart = data?.cart;
+
+  // Medusa v2 may not return addresses in the default response fields.
+  // If we sent addresses but they're not in the response, verify by re-fetching.
+  if (cart && (payload.shipping_address || payload.billing_address)) {
+    if (!cart.shipping_address?.first_name && !cart.billing_address?.first_name) {
+      console.log("[Medusa] Addresses not in update response – verifying with re-fetch...");
+      const verify = await medusaFetch<{ cart: MedusaCart }>(
+        `/carts/${cartId}?fields=*shipping_address,*billing_address`
+      );
+      if (verify?.cart) {
+        console.log("[Medusa] Verified cart addresses:", {
+          shipping: verify.cart.shipping_address,
+          billing: verify.cart.billing_address,
+        });
+        // Merge address data into the response cart
+        return { ...cart, ...verify.cart };
+      }
+    }
+  }
+
+  return cart || null;
 }
 
 /** Add shipping method to cart */
@@ -358,29 +388,85 @@ export async function addShippingMethod(
 /**
  * Fetch cart with payment_collection included.
  * Medusa v2 uses different field expansion syntax – try multiple approaches.
+ * Includes retry with delay since payment_collection may be created asynchronously.
  */
 export async function fetchCartForCheckout(
   cartId: string
 ): Promise<MedusaCart | null> {
-  // Approach 1: Medusa v2 relation expansion with *
-  let data = await medusaFetch<{ cart: MedusaCart }>(
-    `/carts/${cartId}?fields=*payment_collection`
-  );
-  if (data?.cart?.payment_collection?.id) {
-    return data.cart;
+  // Helper to check payment_collection on any cart-like response
+  const hasPaymentCollection = (cart: any): boolean =>
+    !!(cart?.payment_collection?.id);
+
+  // Try multiple field expansion approaches
+  const expansionPaths = [
+    `?fields=*payment_collection,*payment_collection.payment_sessions`,
+    `?fields=*payment_collection`,
+    `?fields=+payment_collection.id,+payment_collection.payment_sessions`,
+    ``, // plain fetch – some Medusa versions include it by default
+  ];
+
+  for (const qs of expansionPaths) {
+    const data = await medusaFetch<{ cart: MedusaCart }>(
+      `/carts/${cartId}${qs}`
+    );
+    if (hasPaymentCollection(data?.cart)) {
+      console.log(`[Medusa] payment_collection found with expansion: "${qs}"`);
+      return data!.cart;
+    }
   }
 
-  // Approach 2: + prefix expansion
-  data = await medusaFetch<{ cart: MedusaCart }>(
-    `/carts/${cartId}?fields=+payment_collection.id,+payment_collection.payment_sessions`
+  // Log the raw cart keys for debugging
+  const rawData = await medusaFetch<{ cart: Record<string, unknown> }>(
+    `/carts/${cartId}`
   );
-  if (data?.cart?.payment_collection?.id) {
-    return data.cart;
+  if (rawData?.cart) {
+    console.log(
+      "[Medusa] Cart keys (no payment_collection yet):",
+      Object.keys(rawData.cart)
+    );
+    console.log(
+      "[Medusa] payment_collection value:",
+      (rawData.cart as any).payment_collection
+    );
   }
 
-  // Approach 3: plain fetch (some Medusa versions include it by default)
-  data = await medusaFetch<{ cart: MedusaCart }>(`/carts/${cartId}`);
-  return data?.cart || null;
+  return (rawData?.cart as unknown as MedusaCart) || null;
+}
+
+/**
+ * Fetch cart for checkout WITH retries.
+ * After adding a shipping method, Medusa v2 may take a moment to create
+ * the payment_collection. This function retries up to `maxRetries` times
+ * with increasing delay.
+ */
+export async function fetchCartForCheckoutWithRetry(
+  cartId: string,
+  maxRetries: number = 4,
+  baseDelayMs: number = 800
+): Promise<MedusaCart | null> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    if (attempt > 0) {
+      const delay = baseDelayMs * attempt;
+      console.log(
+        `[Medusa] Retry ${attempt}/${maxRetries} – waiting ${delay}ms for payment_collection...`
+      );
+      await new Promise((r) => setTimeout(r, delay));
+    }
+
+    const cart = await fetchCartForCheckout(cartId);
+    if (cart?.payment_collection?.id) {
+      console.log(
+        `[Medusa] payment_collection found on attempt ${attempt + 1}:`,
+        cart.payment_collection.id
+      );
+      return cart;
+    }
+  }
+
+  console.warn(
+    `[Medusa] payment_collection NOT found after ${maxRetries + 1} attempts`
+  );
+  return await fetchCartForCheckout(cartId); // return last attempt anyway
 }
 
 /** Initialize payment sessions */
