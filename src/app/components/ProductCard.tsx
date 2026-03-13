@@ -2,7 +2,7 @@ import { motion } from "motion/react";
 import { ShoppingBag, Plus } from "lucide-react";
 import type { Product } from "./productData";
 import { useCart } from "./CartContext";
-import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { SmartImage } from "./SmartImage";
 import { Link } from "react-router";
 
 export function ProductCard({ product }: { product: Product }) {
@@ -16,13 +16,13 @@ export function ProductCard({ product }: { product: Product }) {
       className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500"
     >
       <Link to={`/shop/${product.id}`} className="block">
-        <div className="relative overflow-hidden aspect-[4/5]">
-          <ImageWithFallback
+        <div className="relative overflow-hidden aspect-[4/5] bg-white">
+          <SmartImage
             src={product.image}
             alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+            className="w-full h-full group-hover:scale-105 transition-transform duration-700"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
           {product.badge && (
             <span className="absolute top-3 left-3 bg-gold-400 text-white text-xs px-3 py-1 rounded-full tracking-wide uppercase">
               {product.badge}

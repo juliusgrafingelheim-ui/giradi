@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useMedusaProducts } from "../hooks/useMedusaProducts";
 import { useCart } from "../CartContext";
 import { ProductCard } from "../ProductCard";
-import { ImageWithFallback } from "../figma/ImageWithFallback";
+import { SmartImage } from "../SmartImage";
 import { SEOHead } from "../SEOHead";
 
 export function ProductDetailPage() {
@@ -81,10 +81,11 @@ export function ProductDetailPage() {
             className="relative"
           >
             <div className="aspect-square rounded-2xl overflow-hidden bg-white">
-              <ImageWithFallback
+              <SmartImage
                 src={product.image}
                 alt={product.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full"
+                containClassName="p-6 bg-[#F5F3EE]"
               />
             </div>
             {product.badge && (
