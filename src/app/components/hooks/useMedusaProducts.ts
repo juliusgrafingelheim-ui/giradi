@@ -240,17 +240,6 @@ function medusaToProduct(medusa: MedusaProduct): Product {
     if (firstUsable) image = firstUsable.url;
   }
 
-  // Debug: log image resolution for products with backend images
-  const hasBackendImage = isUsableThumbnail(medusa.thumbnail) || (medusa.images?.length ?? 0) > 0;
-  if (hasBackendImage || medusa.handle?.startsWith("bio")) {
-    console.log(`[Image] "${medusa.handle}" → used: ${image.substring(0, 80)}...`, {
-      thumbnail: medusa.thumbnail ?? "(null)",
-      thumbnailUsable: isUsableThumbnail(medusa.thumbnail),
-      images: medusa.images?.map((i) => i.url) ?? [],
-      localFallback: localMatch?.image?.substring(0, 60) ?? "(none)",
-    });
-  }
-
   return {
     id: medusa.handle || medusa.id,
     name: medusa.title,
@@ -307,12 +296,9 @@ export function useMedusaProducts(): UseMedusaProductsResult {
         if (cancelled) return;
 
         if (medusaProducts && medusaProducts.length > 0) {
-          console.log(`[useMedusaProducts] Backend returned ${medusaProducts.length} products`);
-
           const mapped = medusaProducts.map(medusaToProduct);
 
           // Deduplicate: same normalized title+size = same product
-          // Keep the version that has metadata.category (seeded) over inferred ones
           const dedupMap = new Map<string, (typeof mapped)[0]>();
           for (const p of mapped) {
             const key = normalizeTitle(p.name) + "|" + (extractSizeMl(p.size || p.subtitle) ?? "");
@@ -324,16 +310,11 @@ export function useMedusaProducts(): UseMedusaProductsResult {
               const pIsLocal = localProducts.some((lp) => lp.id === p.id);
               const existingIsLocal = localProducts.some((lp) => lp.id === existing.id);
               if (pIsLocal && !existingIsLocal) {
-                console.warn(`[useMedusaProducts] Replacing "${existing.id}" with seeded "${p.id}" (same product)`);
                 dedupMap.set(key, p);
-              } else {
-                console.warn(`[useMedusaProducts] Duplicate skipped: "${p.id}" – "${p.name}" (keeping "${existing.id}")`);
               }
             }
           }
           const deduped = Array.from(dedupMap.values());
-
-          console.log(`[useMedusaProducts] After dedup: ${deduped.length} products (${mapped.length - deduped.length} duplicates removed)`);
 
           setProducts(deduped);
           setIsFromBackend(true);
@@ -346,7 +327,6 @@ export function useMedusaProducts(): UseMedusaProductsResult {
         }
       } catch (err) {
         if (cancelled) return;
-        console.warn("[useMedusaProducts] Fallback to local data:", err);
         setProducts(localProducts);
         setIsFromBackend(false);
         setError("Backend nicht erreichbar – lokale Daten werden angezeigt.");

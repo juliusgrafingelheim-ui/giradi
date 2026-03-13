@@ -8,8 +8,6 @@ import {
   removeLineItem,
   clearStoredCartId,
   validateCart,
-  forceNewCart,
-  type MedusaCart,
 } from "./api/medusa-client";
 
 // ---------------------------------------------------------------------------
@@ -66,8 +64,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Enqueue a Medusa operation
   const enqueue = useCallback((fn: () => Promise<void>) => {
-    opQueue.current = opQueue.current.then(fn).catch((err) => {
-      console.warn("[Cart] Medusa sync error:", err);
+    opQueue.current = opQueue.current.then(fn).catch(() => {
+      // Medusa sync error – silently handled
     });
   }, []);
 
@@ -81,12 +79,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (medusaCartId) {
         const existingCart = await validateCart(medusaCartId);
         if (existingCart) {
-          console.log("[Cart] Existing Medusa cart validated:", medusaCartId);
           setSyncing(false);
           return medusaCartId;
         }
         // Cart is gone (404/completed/expired) – clear and recreate
-        console.warn("[Cart] Cart", medusaCartId, "is stale (404). Recreating...");
         clearStoredCartId();
         setMedusaCartId(null);
       }
@@ -94,19 +90,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       // 2. Create a fresh cart
       const newCart = await getOrCreateCart();
       if (!newCart) {
-        console.warn("[Cart] Failed to create new Medusa cart");
         return null;
       }
 
       const newCartId = newCart.id;
       setMedusaCartId(newCartId);
-      console.log("[Cart] New Medusa cart created:", newCartId);
 
-      // 3. Re-add all local items to the new cart
+      // Re-add all local items to the new cart
       // We need to read items from the current state snapshot
       const currentItems = items;
       if (currentItems.length > 0) {
-        console.log("[Cart] Re-syncing", currentItems.length, "item(s) to new cart...");
         for (const item of currentItems) {
           const variantId = getVariantId(item.product);
           if (!variantId) continue;
@@ -126,17 +119,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                   )
                 );
               }
-              console.log("[Cart] Re-synced:", item.product.name, "×", item.quantity);
             }
-          } catch (err) {
-            console.warn("[Cart] Failed to re-sync item:", item.product.name, err);
+          } catch {
+            // skip failed items
           }
         }
       }
 
       return newCartId;
-    } catch (err) {
-      console.warn("[Cart] Failed to ensure Medusa cart:", err);
+    } catch {
       return null;
     } finally {
       setSyncing(false);
@@ -200,10 +191,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                   )
                 );
               }
-              console.log("[Cart] Added to Medusa cart:", product.name);
             }
-          } catch (err) {
-            console.warn("[Cart] Failed to add to Medusa:", err);
+          } catch {
+            // sync error – local state is still correct
           } finally {
             setSyncing(false);
           }
@@ -223,9 +213,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         enqueue(async () => {
           try {
             await removeLineItem(medusaCartId!, item._lineItemId!);
-            console.log("[Cart] Removed from Medusa cart:", productId);
-          } catch (err) {
-            console.warn("[Cart] Failed to remove from Medusa:", err);
+          } catch {
+            // sync error
           }
         });
       }
@@ -244,8 +233,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           enqueue(async () => {
             try {
               await removeLineItem(medusaCartId!, item._lineItemId!);
-            } catch (err) {
-              console.warn("[Cart] Failed to remove from Medusa:", err);
+            } catch {
+              // sync error
             }
           });
         }
@@ -259,9 +248,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           enqueue(async () => {
             try {
               await updateLineItem(medusaCartId!, item._lineItemId!, quantity);
-              console.log("[Cart] Updated quantity in Medusa:", productId, quantity);
-            } catch (err) {
-              console.warn("[Cart] Failed to update Medusa:", err);
+            } catch {
+              // sync error
             }
           });
         }

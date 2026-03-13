@@ -119,7 +119,6 @@ async function medusaFetch<T>(
     });
 
     if (!res.ok) {
-      // Try to read error body for better debugging
       let errorBody = "";
       try {
         const errJson = await res.json();
@@ -131,14 +130,7 @@ async function medusaFetch<T>(
       return null;
     }
 
-    const json = await res.json();
-
-    // Debug: log raw response for POST requests
-    if (options.method === "POST" || options.method === "DELETE") {
-      console.log(`[Medusa] Raw response – ${path}:`, JSON.stringify(json).slice(0, 1500));
-    }
-
-    return json as T;
+    return (await res.json()) as T;
   } catch (err) {
     console.warn(`[Medusa] Network error – ${path}`, err);
     return null;
@@ -146,7 +138,7 @@ async function medusaFetch<T>(
 }
 
 // ---------------------------------------------------------------------------
-// Health Check (for cron-job.org and UI status indicator)
+// Health Check
 // ---------------------------------------------------------------------------
 
 export async function checkBackendHealth(): Promise<{
@@ -156,15 +148,11 @@ export async function checkBackendHealth(): Promise<{
   if (!IS_BACKEND_ENABLED) return { online: false, latency: 0 };
 
   const start = Date.now();
-  // Use /store/products?limit=1 instead of /health to avoid CORS issues.
-  // /health is not covered by Medusa's STORE_CORS, but /store/* routes are.
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const res = await fetch(STORE_HEALTH_ENDPOINT, {
         method: "GET",
-        headers: {
-          "x-publishable-api-key": MEDUSA_PUBLISHABLE_KEY,
-        },
+        headers: { "x-publishable-api-key": MEDUSA_PUBLISHABLE_KEY },
         signal: AbortSignal.timeout(15000),
       });
       if (res.ok) return { online: true, latency: Date.now() - start };
@@ -184,17 +172,6 @@ export async function fetchProducts(): Promise<MedusaProduct[] | null> {
   const data = await medusaFetch<{ products: MedusaProduct[] }>(
     "/products?limit=100&fields=+thumbnail,+metadata,*images,*variants,*variants.prices"
   );
-
-  // Debug: log first product's image data to verify thumbnail/images are coming through
-  if (data?.products?.length) {
-    const sample = data.products[0];
-    console.log(`[Medusa] Sample product "${sample.title}":`, {
-      thumbnail: sample.thumbnail,
-      images: sample.images?.map((i) => i.url),
-      imageCount: sample.images?.length ?? 0,
-    });
-  }
-
   return data?.products || null;
 }
 
@@ -225,15 +202,13 @@ export function clearStoredCartId() {
   localStorage.removeItem(CART_ID_KEY);
 }
 
-/** Create a new cart (with AT region) */
+/** Create a new cart */
 export async function createCart(): Promise<MedusaCart | null> {
   const data = await medusaFetch<{ cart: MedusaCart }>("/carts", {
     method: "POST",
     body: JSON.stringify({}),
   });
-  if (data?.cart) {
-    storeCartId(data.cart.id);
-  }
+  if (data?.cart) storeCartId(data.cart.id);
   return data?.cart || null;
 }
 
@@ -246,18 +221,13 @@ export async function getOrCreateCart(): Promise<MedusaCart | null> {
       `/carts/${existingId}`
     );
     if (data?.cart) return data.cart;
-    // Cart expired or invalid – create new
-    console.warn(`[Medusa] Stored cart ${existingId} is gone (404/expired), creating new cart`);
     clearStoredCartId();
   }
 
   return createCart();
 }
 
-/**
- * Validate that a cart still exists on the backend AND is not completed.
- * Returns the cart if valid and open, null if expired/completed/404.
- */
+/** Validate that a cart still exists and is not completed. */
 export async function validateCart(
   cartId: string
 ): Promise<MedusaCart | null> {
@@ -267,18 +237,11 @@ export async function validateCart(
   );
   const cart = data?.cart;
   if (!cart) return null;
-  // A completed cart still returns on GET but rejects POST updates → treat as invalid
-  if ((cart as any).completed_at) {
-    console.warn(`[Medusa] Cart ${cartId} is completed – treating as invalid`);
-    return null;
-  }
+  if ((cart as any).completed_at) return null;
   return cart;
 }
 
-/**
- * Force-create a brand new cart, ignoring any stored ID.
- * Clears localStorage first to prevent getOrCreateCart from reusing the old one.
- */
+/** Force-create a brand new cart, ignoring any stored ID. */
 export function forceNewCart(): Promise<MedusaCart | null> {
   clearStoredCartId();
   return createCart();
@@ -345,29 +308,7 @@ export async function updateCart(
     method: "POST",
     body: JSON.stringify(payload),
   });
-
-  const cart = data?.cart;
-
-  // Medusa v2 may not return addresses in the default response fields.
-  // If we sent addresses but they're not in the response, verify by re-fetching.
-  if (cart && (payload.shipping_address || payload.billing_address)) {
-    if (!cart.shipping_address?.first_name && !cart.billing_address?.first_name) {
-      console.log("[Medusa] Addresses not in update response – verifying with re-fetch...");
-      const verify = await medusaFetch<{ cart: MedusaCart }>(
-        `/carts/${cartId}?fields=*shipping_address,*billing_address`
-      );
-      if (verify?.cart) {
-        console.log("[Medusa] Verified cart addresses:", {
-          shipping: verify.cart.shipping_address,
-          billing: verify.cart.billing_address,
-        });
-        // Merge address data into the response cart
-        return { ...cart, ...verify.cart };
-      }
-    }
-  }
-
-  return cart || null;
+  return data?.cart || null;
 }
 
 /** Add shipping method to cart */
@@ -381,113 +322,6 @@ export async function addShippingMethod(
       method: "POST",
       body: JSON.stringify({ option_id: optionId }),
     }
-  );
-  return data?.cart || null;
-}
-
-/**
- * Fetch cart with payment_collection included.
- * Medusa v2 uses different field expansion syntax – try multiple approaches.
- * Includes retry with delay since payment_collection may be created asynchronously.
- */
-export async function fetchCartForCheckout(
-  cartId: string
-): Promise<MedusaCart | null> {
-  // Helper to check payment_collection on any cart-like response
-  const hasPaymentCollection = (cart: any): boolean =>
-    !!(cart?.payment_collection?.id);
-
-  // Try multiple field expansion approaches
-  const expansionPaths = [
-    `?fields=*payment_collection,*payment_collection.payment_sessions`,
-    `?fields=*payment_collection`,
-    `?fields=+payment_collection.id,+payment_collection.payment_sessions`,
-    ``, // plain fetch – some Medusa versions include it by default
-  ];
-
-  for (const qs of expansionPaths) {
-    const data = await medusaFetch<{ cart: MedusaCart }>(
-      `/carts/${cartId}${qs}`
-    );
-    if (hasPaymentCollection(data?.cart)) {
-      console.log(`[Medusa] payment_collection found with expansion: "${qs}"`);
-      return data!.cart;
-    }
-  }
-
-  // Log the raw cart keys for debugging
-  const rawData = await medusaFetch<{ cart: Record<string, unknown> }>(
-    `/carts/${cartId}`
-  );
-  if (rawData?.cart) {
-    console.log(
-      "[Medusa] Cart keys (no payment_collection yet):",
-      Object.keys(rawData.cart)
-    );
-    console.log(
-      "[Medusa] payment_collection value:",
-      (rawData.cart as any).payment_collection
-    );
-  }
-
-  return (rawData?.cart as unknown as MedusaCart) || null;
-}
-
-/**
- * Fetch cart for checkout WITH retries.
- * After adding a shipping method, Medusa v2 may take a moment to create
- * the payment_collection. This function retries up to `maxRetries` times
- * with increasing delay.
- */
-export async function fetchCartForCheckoutWithRetry(
-  cartId: string,
-  maxRetries: number = 4,
-  baseDelayMs: number = 800
-): Promise<MedusaCart | null> {
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    if (attempt > 0) {
-      const delay = baseDelayMs * attempt;
-      console.log(
-        `[Medusa] Retry ${attempt}/${maxRetries} – waiting ${delay}ms for payment_collection...`
-      );
-      await new Promise((r) => setTimeout(r, delay));
-    }
-
-    const cart = await fetchCartForCheckout(cartId);
-    if (cart?.payment_collection?.id) {
-      console.log(
-        `[Medusa] payment_collection found on attempt ${attempt + 1}:`,
-        cart.payment_collection.id
-      );
-      return cart;
-    }
-  }
-
-  console.warn(
-    `[Medusa] payment_collection NOT found after ${maxRetries + 1} attempts`
-  );
-  return await fetchCartForCheckout(cartId); // return last attempt anyway
-}
-
-/** Initialize payment sessions */
-export async function initPaymentSessions(
-  cartId: string
-): Promise<MedusaCart | null> {
-  const data = await medusaFetch<{ cart: MedusaCart }>(
-    `/carts/${cartId}/payment-sessions`,
-    { method: "POST" }
-  );
-  return data?.cart || null;
-}
-
-/** Select payment session provider */
-export async function selectPaymentSession(
-  cartId: string,
-  providerId: string
-): Promise<MedusaCart | null> {
-  const data = await medusaFetch<{ cart: MedusaCart }>(
-    `/carts/${cartId}/payment-sessions/${providerId}`,
-    { method: "POST" }
   );
   return data?.cart || null;
 }
@@ -514,11 +348,6 @@ export async function completeCart(
     json = null;
   }
 
-  console.log(
-    "[Medusa] completeCart status:", res.status,
-    "raw:", JSON.stringify(json).slice(0, 2000)
-  );
-
   // Success: 200 OK
   if (res.ok && json) {
     const order = json.order || json.data;
@@ -529,13 +358,8 @@ export async function completeCart(
   }
 
   // 409 Conflict: cart was already completed (double-submit).
-  // The order exists — we can still treat this as success.
   if (res.status === 409) {
-    console.warn(
-      "[Medusa] completeCart got 409 – cart already completed. Treating as success."
-    );
     clearStoredCartId();
-    // Return a minimal order object so the checkout flow can proceed
     return {
       id: cartId,
       display_id: 0,
@@ -545,13 +369,12 @@ export async function completeCart(
     } as MedusaOrder;
   }
 
-  // Any other error
-  console.error("[Medusa] completeCart failed:", res.status, json);
+  console.warn("[Medusa] completeCart failed:", res.status, json);
   return null;
 }
 
 // ---------------------------------------------------------------------------
-// REGIONS (for shipping options)
+// REGIONS
 // ---------------------------------------------------------------------------
 
 export interface MedusaRegion {
@@ -582,8 +405,7 @@ export async function fetchShippingOptions(
 
 /**
  * Create a payment collection for a cart.
- * In Medusa v2.13+, payment collections are NOT auto-created when adding
- * a shipping method. They must be explicitly created via this endpoint.
+ * In Medusa v2.13+, payment collections are NOT auto-created.
  */
 export async function createPaymentCollection(
   cartId: string
@@ -594,19 +416,11 @@ export async function createPaymentCollection(
     method: "POST",
     body: JSON.stringify({ cart_id: cartId }),
   });
-  if (data?.payment_collection?.id) {
-    console.log(
-      "[Medusa] Payment collection created:",
-      data.payment_collection.id
-    );
-    return data.payment_collection;
-  }
-  return null;
+  return data?.payment_collection?.id ? data.payment_collection : null;
 }
 
 /**
  * Initialize a payment session on the cart's payment collection.
- * We create a payment session with the given provider (e.g. "pp_system_default").
  * Note: Medusa v2.13+ does NOT accept a "context" field here.
  */
 export async function initPaymentSession(
@@ -619,9 +433,7 @@ export async function initPaymentSession(
     };
   }>(`/payment-collections/${paymentCollectionId}/payment-sessions`, {
     method: "POST",
-    body: JSON.stringify({
-      provider_id: providerId,
-    }),
+    body: JSON.stringify({ provider_id: providerId }),
   });
   const sessions = data?.payment_collection?.payment_sessions;
   return sessions?.find((s) => s.provider_id === providerId) || sessions?.[0] || null;

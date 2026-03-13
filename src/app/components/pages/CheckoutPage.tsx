@@ -2,8 +2,6 @@ import {
   updateCart,
   addShippingMethod,
   fetchShippingOptions,
-  fetchCartForCheckout,
-  fetchCartForCheckoutWithRetry,
   createPaymentCollection,
   initPaymentSession,
   completeCart,
@@ -12,7 +10,7 @@ import {
   clearStoredCartId,
   type MedusaAddress,
 } from "../api/medusa-client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import {
@@ -69,7 +67,6 @@ const paymentMethods: {
   },
 ];
 
-// Checkout step indicator
 type CheckoutStep = "form" | "processing" | "error";
 
 export function CheckoutPage() {
@@ -119,40 +116,32 @@ export function CheckoutPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // -----------------------------------------------------------------------
-  // Helper: get variant ID from product
-  // -----------------------------------------------------------------------
-  const getVariantId = (product: any): string | undefined => {
-    return product._variantId;
-  };
+  const getVariantId = (product: any): string | undefined => product._variantId;
 
-  // -----------------------------------------------------------------------
-  // Helper: force-create a new cart and re-add all items
-  // -----------------------------------------------------------------------
+  // Force-create a new cart and re-add all items (recovery for stale carts)
   const recoverCart = async (): Promise<string | null> => {
-    console.warn("[Checkout] Attempting cart recovery – creating new cart...");
     clearStoredCartId();
     const newCart = await forceNewCart();
     if (!newCart) return null;
-    const newCartId = newCart.id;
-    console.log("[Checkout] New cart created:", newCartId);
 
-    // Re-add all current items
     for (const item of items) {
       const variantId = getVariantId(item.product);
       if (!variantId) continue;
       try {
-        await addToCart(newCartId, variantId, item.quantity);
-        console.log("[Checkout] Re-added:", item.product.name, "×", item.quantity);
-      } catch (err) {
-        console.warn("[Checkout] Failed to re-add item:", item.product.name, err);
+        await addToCart(newCart.id, variantId, item.quantity);
+      } catch {
+        // skip failed items
       }
     }
-    return newCartId;
+    return newCart.id;
   };
 
   // -----------------------------------------------------------------------
-  // MEDUSA CHECKOUT FLOW
+  // MEDUSA CHECKOUT FLOW (4 sequential API calls)
+  // 1. Update cart (email + address)
+  // 2. Add shipping method
+  // 3. Create payment collection + session
+  // 4. Complete cart → order
   // -----------------------------------------------------------------------
 
   const handleMedusaCheckout = async (cartId: string) => {
@@ -163,7 +152,6 @@ export function CheckoutPage() {
       let activeCartId = cartId;
 
       // 1. Update cart with email + addresses
-      console.log("[Checkout] Step 1: Updating cart with customer info...");
       const shippingAddress: MedusaAddress = {
         first_name: form.firstName,
         last_name: form.lastName,
@@ -174,33 +162,19 @@ export function CheckoutPage() {
         phone: form.phone || undefined,
       };
 
-      console.log("[Checkout] Payload:", JSON.stringify({
-        email: form.email,
-        shipping_address: shippingAddress,
-        billing_address: shippingAddress,
-      }, null, 2));
-
       let cartUpdate = await updateCart(activeCartId, {
         email: form.email,
         shipping_address: shippingAddress,
         billing_address: shippingAddress,
       });
 
-      console.log("[Checkout] Cart update response:", JSON.stringify({
-        email: cartUpdate?.email,
-        shipping_address: cartUpdate?.shipping_address,
-        billing_address: cartUpdate?.billing_address,
-      }, null, 2));
-
       // If update failed (404 – stale/completed cart), recover with a new cart
       if (!cartUpdate) {
-        console.warn("[Checkout] Cart update failed (404?), attempting recovery...");
         const recoveredCartId = await recoverCart();
         if (!recoveredCartId) {
           throw new Error("Kundendaten konnten nicht gespeichert werden. Bitte laden Sie die Seite neu.");
         }
         activeCartId = recoveredCartId;
-        // Retry update with fresh cart
         cartUpdate = await updateCart(activeCartId, {
           email: form.email,
           shipping_address: shippingAddress,
@@ -209,113 +183,67 @@ export function CheckoutPage() {
         if (!cartUpdate) {
           throw new Error("Kundendaten konnten nicht gespeichert werden.");
         }
-        console.log("[Checkout] Recovery successful, continuing with cart:", activeCartId);
       }
 
       // 2. Fetch shipping options and select one
-      console.log("[Checkout] Step 2: Fetching shipping options...");
       const shippingOptions = await fetchShippingOptions(activeCartId);
-      console.log("[Checkout] Shipping options:", shippingOptions);
 
-      if (shippingOptions && shippingOptions.length > 0) {
-        // Try to find the right shipping option
-        let selectedOption = shippingOptions[0]; // fallback to first
-
-        if (isPickup) {
-          // Look for pickup/Abholung option
-          const pickup = shippingOptions.find(
-            (o) =>
-              o.name.toLowerCase().includes("abhol") ||
-              o.name.toLowerCase().includes("pickup") ||
-              o.amount === 0
-          );
-          if (pickup) selectedOption = pickup;
-        } else {
-          // Look for delivery option
-          const delivery = shippingOptions.find(
-            (o) =>
-              o.name.toLowerCase().includes("versand") ||
-              o.name.toLowerCase().includes("shipping") ||
-              o.name.toLowerCase().includes("flatrate") ||
-              o.name.toLowerCase().includes("standard")
-          );
-          if (delivery) selectedOption = delivery;
-        }
-
-        console.log("[Checkout] Selected shipping:", selectedOption.name, selectedOption.id);
-        const cartWithShipping = await addShippingMethod(activeCartId, selectedOption.id);
-
-        if (!cartWithShipping) {
-          throw new Error("Versandart konnte nicht ausgewählt werden.");
-        }
-
-        // 3. Initialize payment session
-        // In Medusa v2.13+, payment collections are NOT auto-created.
-        // We must explicitly create one via POST /store/payment-collections.
-        console.log("[Checkout] Step 3: Initializing payment...");
-
-        // Check if payment_collection already exists on the cart response
-        let paymentCollectionId = (cartWithShipping as any).payment_collection?.id;
-
-        // If not on the response, explicitly create one (Medusa v2.13+ requirement)
-        if (!paymentCollectionId) {
-          console.log("[Checkout] Creating payment collection for cart...");
-          const paymentCollection = await createPaymentCollection(activeCartId);
-          console.log("[Checkout] Payment collection result:", paymentCollection);
-          paymentCollectionId = paymentCollection?.id;
-        }
-
-        if (paymentCollectionId) {
-          const paymentSession = await initPaymentSession(
-            paymentCollectionId,
-            "pp_system_default"
-          );
-          console.log("[Checkout] Payment session:", paymentSession);
-
-          if (!paymentSession) {
-            throw new Error("Zahlungssitzung konnte nicht erstellt werden. Bitte versuchen Sie es erneut.");
-          }
-        } else {
-          // payment_collection is REQUIRED for completeCart to succeed.
-          // If we can't find it, something is wrong with the backend config.
-          console.error(
-            "[Checkout] CRITICAL: No payment_collection found after retries.",
-            "Check backend: Region DACH must have pp_system_default linked as payment provider."
-          );
-          throw new Error(
-            "Zahlung konnte nicht initialisiert werden. " +
-            "Bitte kontaktiere uns unter info@girardi-oil.at – " +
-            "wir kümmern uns sofort darum."
-          );
-        }
-      } else {
-        // No shipping options = backend misconfiguration
-        console.error(
-          "[Checkout] CRITICAL: No shipping options found for cart.",
-          "Check backend: Region DACH must have shipping options (Flatrate, Gratis ab 50€, Abholung) linked."
-        );
+      if (!shippingOptions?.length) {
         throw new Error(
           "Keine Versandoptionen verfügbar. " +
-          "Bitte kontaktiere uns unter info@girardi-oil.at – " +
-          "wir kümmern uns sofort darum."
+          "Bitte kontaktiere uns unter info@girardi-oil.at."
         );
+      }
+
+      let selectedOption = shippingOptions[0];
+      if (isPickup) {
+        const pickup = shippingOptions.find(
+          (o) =>
+            o.name.toLowerCase().includes("abhol") ||
+            o.name.toLowerCase().includes("pickup") ||
+            o.amount === 0
+        );
+        if (pickup) selectedOption = pickup;
+      } else {
+        const delivery = shippingOptions.find(
+          (o) =>
+            o.name.toLowerCase().includes("versand") ||
+            o.name.toLowerCase().includes("shipping") ||
+            o.name.toLowerCase().includes("flatrate") ||
+            o.name.toLowerCase().includes("standard")
+        );
+        if (delivery) selectedOption = delivery;
+      }
+
+      const cartWithShipping = await addShippingMethod(activeCartId, selectedOption.id);
+      if (!cartWithShipping) {
+        throw new Error("Versandart konnte nicht ausgewählt werden.");
+      }
+
+      // 3. Create payment collection + init session
+      let paymentCollectionId = (cartWithShipping as any).payment_collection?.id;
+
+      if (!paymentCollectionId) {
+        const paymentCollection = await createPaymentCollection(activeCartId);
+        paymentCollectionId = paymentCollection?.id;
+      }
+
+      if (!paymentCollectionId) {
+        throw new Error(
+          "Zahlung konnte nicht initialisiert werden. " +
+          "Bitte kontaktiere uns unter info@girardi-oil.at."
+        );
+      }
+
+      const paymentSession = await initPaymentSession(paymentCollectionId, "pp_system_default");
+      if (!paymentSession) {
+        throw new Error("Zahlungssitzung konnte nicht erstellt werden. Bitte versuchen Sie es erneut.");
       }
 
       // 4. Complete the cart → creates order
-      console.log("[Checkout] Step 4: Completing cart...");
-      let order;
-      try {
-        order = await completeCart(activeCartId);
-      } catch (completeErr) {
-        console.error("[Checkout] completeCart threw:", completeErr);
-        // Even if the call errored, the order might have been created server-side.
-        // We'll still show an error, but log for debugging.
-      }
-
-      console.log("[Checkout] completeCart result:", order);
+      const order = await completeCart(activeCartId);
 
       if (order) {
-        console.log("[Checkout] ✅ Order created:", order.id, "display_id:", order.display_id);
         clearCart();
         navigate("/bestellung-bestaetigt", {
           state: {
@@ -331,11 +259,7 @@ export function CheckoutPage() {
           },
         });
       } else {
-        console.error(
-          "[Checkout] completeCart returned null. The order may have been created on the backend but the response was not parsed correctly."
-        );
-        // Last resort: clear the cart anyway and show a success-ish message
-        // since the backend DID create the order (as seen in admin panel before)
+        // Last resort: order may have been created server-side despite no response
         clearCart();
         navigate("/bestellung-bestaetigt", {
           state: {
@@ -351,7 +275,6 @@ export function CheckoutPage() {
         });
       }
     } catch (err: any) {
-      console.error("[Checkout] Error:", err);
       setStep("error");
       setCheckoutError(
         err?.message || "Es ist ein Fehler bei der Bestellung aufgetreten."
@@ -359,10 +282,7 @@ export function CheckoutPage() {
     }
   };
 
-  // -----------------------------------------------------------------------
-  // FALLBACK: Local-only checkout (when backend unavailable)
-  // -----------------------------------------------------------------------
-
+  // Fallback: Local-only checkout (when backend unavailable)
   const handleLocalCheckout = () => {
     setStep("processing");
     setTimeout(() => {
@@ -381,26 +301,18 @@ export function CheckoutPage() {
     }, 1500);
   };
 
-  // -----------------------------------------------------------------------
-  // SUBMIT
-  // -----------------------------------------------------------------------
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    if (isSubmitting) return; // prevent double-submit
+    if (isSubmitting) return;
     setIsSubmitting(true);
 
     try {
       if (IS_BACKEND_ENABLED) {
-        // Always go through ensureMedusaCart – it validates existing carts
-        // and recreates + re-syncs items if the old cart is gone (404)
         const cartId = await ensureMedusaCart();
         if (cartId) {
           await handleMedusaCheckout(cartId);
         } else {
-          // Backend enabled but cart creation failed – fallback
-          console.warn("[Checkout] No Medusa cart available, using local fallback");
           handleLocalCheckout();
         }
       } else {
