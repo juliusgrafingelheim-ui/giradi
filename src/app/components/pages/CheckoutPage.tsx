@@ -267,11 +267,7 @@ export function CheckoutPage() {
         if (paymentCollectionId) {
           const paymentSession = await initPaymentSession(
             paymentCollectionId,
-            "pp_system_default",
-            {
-              payment_method: payment,
-              notes: form.notes || undefined,
-            }
+            "pp_system_default"
           );
           console.log("[Checkout] Payment session:", paymentSession);
 

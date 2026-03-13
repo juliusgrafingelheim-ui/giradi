@@ -571,11 +571,11 @@ export async function createPaymentCollection(
 /**
  * Initialize a payment session on the cart's payment collection.
  * We create a payment session with the given provider (e.g. "pp_system_default").
+ * Note: Medusa v2.13+ does NOT accept a "context" field here.
  */
 export async function initPaymentSession(
   paymentCollectionId: string,
-  providerId: string = "pp_system_default",
-  context?: Record<string, unknown>
+  providerId: string = "pp_system_default"
 ): Promise<{ id: string; provider_id: string; status: string } | null> {
   const data = await medusaFetch<{
     payment_collection: {
@@ -585,7 +585,6 @@ export async function initPaymentSession(
     method: "POST",
     body: JSON.stringify({
       provider_id: providerId,
-      ...(context ? { context } : {}),
     }),
   });
   const sessions = data?.payment_collection?.payment_sessions;
