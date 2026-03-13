@@ -1,3 +1,15 @@
+import {
+  updateCart,
+  addShippingMethod,
+  fetchShippingOptions,
+  fetchCartForCheckout,
+  initPaymentSession,
+  completeCart,
+  forceNewCart,
+  addToCart,
+  clearStoredCartId,
+  type MedusaAddress,
+} from "../api/medusa-client";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
@@ -17,15 +29,6 @@ import { useCart } from "../CartContext";
 import { SEOHead } from "../SEOHead";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { IS_BACKEND_ENABLED } from "../api/config";
-import {
-  updateCart,
-  addShippingMethod,
-  fetchShippingOptions,
-  fetchCartForCheckout,
-  initPaymentSession,
-  completeCart,
-  type MedusaAddress,
-} from "../api/medusa-client";
 
 type PaymentMethod = "vorkasse" | "barzahlung";
 
@@ -114,6 +117,38 @@ export function CheckoutPage() {
   };
 
   // -----------------------------------------------------------------------
+  // Helper: get variant ID from product
+  // -----------------------------------------------------------------------
+  const getVariantId = (product: any): string | undefined => {
+    return product._variantId;
+  };
+
+  // -----------------------------------------------------------------------
+  // Helper: force-create a new cart and re-add all items
+  // -----------------------------------------------------------------------
+  const recoverCart = async (): Promise<string | null> => {
+    console.warn("[Checkout] Attempting cart recovery – creating new cart...");
+    clearStoredCartId();
+    const newCart = await forceNewCart();
+    if (!newCart) return null;
+    const newCartId = newCart.id;
+    console.log("[Checkout] New cart created:", newCartId);
+
+    // Re-add all current items
+    for (const item of items) {
+      const variantId = getVariantId(item.product);
+      if (!variantId) continue;
+      try {
+        await addToCart(newCartId, variantId, item.quantity);
+        console.log("[Checkout] Re-added:", item.product.name, "×", item.quantity);
+      } catch (err) {
+        console.warn("[Checkout] Failed to re-add item:", item.product.name, err);
+      }
+    }
+    return newCartId;
+  };
+
+  // -----------------------------------------------------------------------
   // MEDUSA CHECKOUT FLOW
   // -----------------------------------------------------------------------
 
@@ -121,6 +156,8 @@ export function CheckoutPage() {
     try {
       setStep("processing");
       setCheckoutError(null);
+
+      let activeCartId = cartId;
 
       // 1. Update cart with email + addresses
       console.log("[Checkout] Step 1: Updating cart with customer info...");
@@ -134,19 +171,35 @@ export function CheckoutPage() {
         phone: form.phone || undefined,
       };
 
-      const cartUpdate = await updateCart(cartId, {
+      let cartUpdate = await updateCart(activeCartId, {
         email: form.email,
         shipping_address: shippingAddress,
         billing_address: shippingAddress,
       });
 
+      // If update failed (404 – stale/completed cart), recover with a new cart
       if (!cartUpdate) {
-        throw new Error("Kundendaten konnten nicht gespeichert werden.");
+        console.warn("[Checkout] Cart update failed (404?), attempting recovery...");
+        const recoveredCartId = await recoverCart();
+        if (!recoveredCartId) {
+          throw new Error("Kundendaten konnten nicht gespeichert werden. Bitte laden Sie die Seite neu.");
+        }
+        activeCartId = recoveredCartId;
+        // Retry update with fresh cart
+        cartUpdate = await updateCart(activeCartId, {
+          email: form.email,
+          shipping_address: shippingAddress,
+          billing_address: shippingAddress,
+        });
+        if (!cartUpdate) {
+          throw new Error("Kundendaten konnten nicht gespeichert werden.");
+        }
+        console.log("[Checkout] Recovery successful, continuing with cart:", activeCartId);
       }
 
       // 2. Fetch shipping options and select one
       console.log("[Checkout] Step 2: Fetching shipping options...");
-      const shippingOptions = await fetchShippingOptions(cartId);
+      const shippingOptions = await fetchShippingOptions(activeCartId);
       console.log("[Checkout] Shipping options:", shippingOptions);
 
       if (shippingOptions && shippingOptions.length > 0) {
@@ -175,7 +228,7 @@ export function CheckoutPage() {
         }
 
         console.log("[Checkout] Selected shipping:", selectedOption.name, selectedOption.id);
-        const cartWithShipping = await addShippingMethod(cartId, selectedOption.id);
+        const cartWithShipping = await addShippingMethod(activeCartId, selectedOption.id);
 
         if (!cartWithShipping) {
           throw new Error("Versandart konnte nicht ausgewählt werden.");
@@ -192,7 +245,7 @@ export function CheckoutPage() {
         // If not, fetch the cart again with payment_collection fields
         if (!paymentCollectionId) {
           console.log("[Checkout] Re-fetching cart to get payment_collection...");
-          const fullCart = await fetchCartForCheckout(cartId);
+          const fullCart = await fetchCartForCheckout(activeCartId);
           console.log("[Checkout] Full cart payment_collection:", fullCart?.payment_collection);
           paymentCollectionId = fullCart?.payment_collection?.id;
         }
@@ -223,7 +276,7 @@ export function CheckoutPage() {
 
       // 4. Complete the cart → creates order
       console.log("[Checkout] Step 4: Completing cart...");
-      const order = await completeCart(cartId);
+      const order = await completeCart(activeCartId);
 
       if (order) {
         console.log("[Checkout] Order created:", order);

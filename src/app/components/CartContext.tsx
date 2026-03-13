@@ -8,6 +8,7 @@ import {
   removeLineItem,
   clearStoredCartId,
   validateCart,
+  forceNewCart,
   type MedusaCart,
 } from "./api/medusa-client";
 

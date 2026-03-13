@@ -240,17 +240,33 @@ export async function getOrCreateCart(): Promise<MedusaCart | null> {
 }
 
 /**
- * Validate that a cart still exists on the backend.
- * Returns the cart if valid, null if expired/completed/404.
+ * Validate that a cart still exists on the backend AND is not completed.
+ * Returns the cart if valid and open, null if expired/completed/404.
  */
 export async function validateCart(
   cartId: string
 ): Promise<MedusaCart | null> {
   if (!IS_BACKEND_ENABLED || !cartId) return null;
-  const data = await medusaFetch<{ cart: MedusaCart }>(
+  const data = await medusaFetch<{ cart: MedusaCart & { completed_at?: string | null } }>(
     `/carts/${cartId}`
   );
-  return data?.cart || null;
+  const cart = data?.cart;
+  if (!cart) return null;
+  // A completed cart still returns on GET but rejects POST updates → treat as invalid
+  if ((cart as any).completed_at) {
+    console.warn(`[Medusa] Cart ${cartId} is completed – treating as invalid`);
+    return null;
+  }
+  return cart;
+}
+
+/**
+ * Force-create a brand new cart, ignoring any stored ID.
+ * Clears localStorage first to prevent getOrCreateCart from reusing the old one.
+ */
+export function forceNewCart(): Promise<MedusaCart | null> {
+  clearStoredCartId();
+  return createCart();
 }
 
 /** Add item to cart */
